@@ -205,7 +205,7 @@ function useLang() {
   return { lang, setLang, t };
 }
 
-const HOME_PATH = "/"; // Ana sayfa: /pages/index.jsx
+const HOME_PATH = "/home.html"; // public/home.html
 
 /* ------------------------------------------------------------------
    PAGE — Email-only Sign-in, Email/Phone Sign-up
