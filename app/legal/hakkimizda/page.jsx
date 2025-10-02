@@ -5,15 +5,24 @@ export default function Page({ searchParams }) {
     tr:{title:"Hakkımızda",body:`Bu site; güvenli kayıt/giriş ve çok dilli yasal dokümanlar için temel bir iskele sunar.
 Misyon: basit, hızlı, güvenli kimlik doğrulama.
 Diller: Türkçe • İngilizce • Arapça.
-İletişim için İletişim sayfasına bakınız.`},
+
+İletişim:
+• E-posta: uretenellertr@gmail.com
+• WhatsApp: 05057279143`},
     en:{title:"About",body:`This site provides a minimal scaffold for secure auth and multilingual legal pages.
 Mission: simple, fast, secure authentication.
 Languages: Turkish • English • Arabic.
-See Contact page to reach us.`},
+
+Contact:
+• Email: uretenellertr@gmail.com
+• WhatsApp: 05057279143`},
     ar:{title:"من نحن",body:`يوفّر هذا الموقع هيكلًا بسيطًا لمصادقة آمنة وصفحات قانونية متعددة اللغات.
 المهمة: مصادقة بسيطة وسريعة وآمنة.
 اللغات: التركية • الإنجليزية • العربية.
-راجِع صفحة الاتصال للتواصل.`}
+
+التواصل:
+• البريد: uretenellertr@gmail.com
+• واتساب: 05057279143`}
   }[lang];
   return (<article><h1 style={{fontSize:28,marginBottom:12}}>{T.title}</h1><pre style={{whiteSpace:"pre-wrap",font:"inherit",color:"#334155"}}>{T.body}</pre></article>);
 }
