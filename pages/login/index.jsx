@@ -287,60 +287,55 @@ export default function LoginRegister() {
   }
 
   /* --------------------------- SIGN UP --------------------------- */
-  async function onSignUp(e) {
-    e.preventDefault();
-    if (!signUpLoaded) return;
-    setErr("");
-    if (!consent || (!usePhone && !email) || (usePhone && !phone) || !password || !confirm || !fullName || !username || !city) {
-      setErr(t.required); return;
+async function onSignUp(e) {
+  e.preventDefault();
+  if (!signUpLoaded) return;
+  setErr("");
+
+  if (!consent || !email || !password || !confirm || !fullName || !username || !city) {
+    setErr(t.required); return;
+  }
+  if (password !== confirm) { setErr(t.mismatch); return; }
+  if (!strongPw(password)) { setErr(t.weakpw); return; }
+
+  setLoading(true);
+  try {
+    const [firstName, ...rest] = fullName.trim().split(" ");
+    const lastName = rest.join(" ") || "";
+
+    await signUp.create({
+      emailAddress: email,
+      password,
+      username,            // sadece profilde gösterilecek
+      firstName,
+      lastName,
+      publicMetadata: { role, lang, city, full_name: fullName },
+    });
+
+    await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+    setStep("verify-email"); // sadece e-posta
+  } catch (e) {
+    setErr(e?.errors?.[0]?.message || String(e));
+  } finally { setLoading(false); }
+}
+
+/* --------------------------- SIGN UP VERIFY --------------------------- */
+async function onSignUpVerify(e) {
+  e.preventDefault();
+  if (!signUpLoaded) return;
+  setErr(""); setLoading(true);
+  try {
+    const r = await signUp.attemptEmailAddressVerification({ code });
+    if (r.status === "complete") {
+      await setActive({ session: r.createdSessionId });
+      push(HOME_PATH);
+    } else {
+      setErr(t.badcreds || "Doğrulama başarısız.");
     }
-    if (password !== confirm) { setErr(t.mismatch); return; }
-    if (!strongPw(password)) { setErr(t.weakpw); return; }
-
-    setLoading(true);
-    try {
-      const [firstName, ...rest] = fullName.trim().split(" ");
-      const lastName = rest.join(" ") || "";
-
-      const payload = {
-        password,
-        username, // sadece profilde gösterilecek
-        firstName,
-        lastName,
-        publicMetadata: { role, lang, city, full_name: fullName },
-      };
-      if (usePhone) payload.phoneNumber = phone; else payload.emailAddress = email;
-
-      await signUp.create(payload);
-
-      if (usePhone) {
-        await signUp.preparePhoneNumberVerification({ strategy: "phone_code" });
-        setStep("verify-phone");
-      } else {
-        await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-        setStep("verify-email");
-      }
-    } catch (e) {
-      setErr(e?.errors?.[0]?.message || String(e));
-    } finally { setLoading(false); }
-  }
-
-  async function onSignUpVerify(e) {
-    e.preventDefault();
-    if (!signUpLoaded) return;
-    setErr(""); setLoading(true);
-    try {
-      if (step === "verify-email") {
-        const r = await signUp.attemptEmailAddressVerification({ code });
-        if (r.status === "complete") { await setActive({ session: r.createdSessionId }); push(HOME_PATH); }
-      } else if (step === "verify-phone") {
-        const r = await signUp.attemptPhoneNumberVerification({ code });
-        if (r.status === "complete") { await setActive({ session: r.createdSessionId }); push(HOME_PATH); }
-      }
-    } catch (e) {
-      setErr(e?.errors?.[0]?.message || String(e));
-    } finally { setLoading(false); }
-  }
+  } catch (e) {
+    setErr(e?.errors?.[0]?.message || String(e));
+  } finally { setLoading(false); }
+}
 
   /* --------------------------- UI --------------------------- */
   return (
