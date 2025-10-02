@@ -7,9 +7,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "next": "15.2.3"
+    "@clerk/nextjs": "^6.33.1",
+    "next": "15.2.3",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "@clerk/nextjs": "^6.33.1"
+    "react-dom": "18.2.0"
   }
 }
