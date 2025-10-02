@@ -2,19 +2,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 
-/** ---- i18n (TR/EN/AR/DE) ---- */
-const SUPPORTED = ["tr","en","ar","de"];
+/* ----------------------------- DİL AYARLARI ----------------------------- */
+const SUPPORTED = ["tr", "en", "ar", "de"];
+const LOCALE_LABEL = { tr: "Türkçe", en: "English", ar: "العربية", de: "Deutsch" };
 
 const STR = {
   tr: {
     brand: "Üreten Eller",
     heroTitle: "Üreten Ellere Hoş Geldiniz",
-    motto: [
-      "Amacımız: ev hanımlarına bütçe katkısı sağlamak.",
-      "Amacımız: müşterilere uygun fiyatlı ürünlere erişim sunmak.",
-      "Amacımız: kadın emeğini görünür ve kazançlı kılmak.",
-      "Amacımız: kaliteli ürünü, adil fiyata ulaştırmak.",
-    ],
     sellerPortal: "Üreten El Portalı",
     customerPortal: "Müşteri Portalı",
     needAuth: "Önce kayıt olmalısınız.",
@@ -25,12 +20,6 @@ const STR = {
   en: {
     brand: "Ureten Eller",
     heroTitle: "Welcome to Ureten Eller",
-    motto: [
-      "Our aim: support household budgets of women.",
-      "Our aim: give customers affordable access to products.",
-      "Our aim: make women’s labor visible and rewarding.",
-      "Our aim: deliver quality at a fair price.",
-    ],
     sellerPortal: "Maker Portal",
     customerPortal: "Customer Portal",
     needAuth: "Please sign up first.",
@@ -40,13 +29,7 @@ const STR = {
   },
   ar: {
     brand: "أُنتِج بالأيادي",
-    heroTitle: "مرحبًا بكم",
-    motto: [
-      "هدفنا: دعم ميزانية ربّات البيوت.",
-      "هدفنا: إتاحة منتجات بأسعار مناسبة للعملاء.",
-      "هدفنا: إبراز عمل المرأة وجعله مُجزياً.",
-      "هدفنا: جودة بسعر عادل.",
-    ],
+    heroTitle: "مرحبًا بكم في منصتنا",
     sellerPortal: "بوابة المُنتِجات",
     customerPortal: "بوابة العملاء",
     needAuth: "يرجى التسجيل أولًا.",
@@ -57,12 +40,6 @@ const STR = {
   de: {
     brand: "Ureten Eller",
     heroTitle: "Willkommen bei Ureten Eller",
-    motto: [
-      "Unser Ziel: Haushaltsbudgets von Frauen stärken.",
-      "Unser Ziel: Günstigen Zugang für Kund:innen ermöglichen.",
-      "Unser Ziel: Frauenarbeit sichtbar und lohnend machen.",
-      "Unser Ziel: Qualität zum fairen Preis liefern.",
-    ],
     sellerPortal: "Portal für Anbieterinnen",
     customerPortal: "Kundenportal",
     needAuth: "Bitte zuerst registrieren.",
@@ -72,9 +49,115 @@ const STR = {
   },
 };
 
-const LOCALE_LABEL = { tr: "Türkçe", en: "English", ar: "العربية", de: "Deutsch" };
+/* ----------------------------- 20+ MOTTO (RENKLİ) ----------------------------- */
+const PHRASES = {
+  tr: [
+    { text: "Amacımız: ev hanımlarına bütçe katkısı sağlamak.", color: "#e11d48" },
+    { text: "Kadın emeği değer bulsun.", color: "#c026d3" },
+    { text: "El emeği ürünler adil fiyata.", color: "#7c3aed" },
+    { text: "Mahalle lezzetleri kapınıza gelsin.", color: "#2563eb" },
+    { text: "Usta ellerden taze üretim.", color: "#0ea5e9" },
+    { text: "Her siparişte platform güvencesi.", color: "#14b8a6" },
+    { text: "Küçük üreticiye büyük destek.", color: "#059669" },
+    { text: "Şeffaf fiyat, net teslimat.", color: "#16a34a" },
+    { text: "Güvenli ödeme, kolay iade.", color: "#65a30d" },
+    { text: "Yerelden al, ekonomiye can ver.", color: "#ca8a04" },
+    { text: "Emeğin karşılığı, müşteriye kazanç.", color: "#d97706" },
+    { text: "Ev yapımı tatlar, el işi güzellikler.", color: "#ea580c" },
+    { text: "Her kategoride özenli üretim.", color: "#f97316" },
+    { text: "Siparişten teslimata kesintisiz takip.", color: "#f59e0b" },
+    { text: "Güvenilir satıcı rozetleri.", color: "#eab308" },
+    { text: "Topluluğumuzla daha güçlüyüz.", color: "#84cc16" },
+    { text: "Sürdürülebilir üretime destek.", color: "#22c55e" },
+    { text: "Adil ticaret, mutlu müşteri.", color: "#10b981" },
+    { text: "El emeğine saygı, bütçeye dost fiyat.", color: "#06b6d4" },
+    { text: "Kadınların emeğiyle büyüyoruz.", color: "#3b82f6" },
+    { text: "Şehrinden taze üretim, güvenle alışveriş.", color: "#6366f1" },
+    { text: "Kalite, özen ve şeffaflık.", color: "#8b5cf6" },
+    { text: "İhtiyacın olan el emeği burada.", color: "#d946ef" },
+    { text: "Uygun fiyat, güvenli süreç, mutlu son.", color: "#ec4899" },
+  ],
+  en: [
+    { text: "Our aim: support household budgets of women.", color: "#e11d48" },
+    { text: "Women’s labor should be valued.", color: "#c026d3" },
+    { text: "Handmade products at fair prices.", color: "#7c3aed" },
+    { text: "Neighborhood flavors to your door.", color: "#2563eb" },
+    { text: "Fresh production from skilled hands.", color: "#0ea5e9" },
+    { text: "Platform protection on every order.", color: "#14b8a6" },
+    { text: "Big support for small producers.", color: "#059669" },
+    { text: "Transparent pricing, clear delivery.", color: "#16a34a" },
+    { text: "Secure payments, easy returns.", color: "#65a30d" },
+    { text: "Buy local, boost the economy.", color: "#ca8a04" },
+    { text: "Fair reward for labor, savings for customers.", color: "#d97706" },
+    { text: "Homemade tastes, handcrafted beauty.", color: "#ea580c" },
+    { text: "Careful production across categories.", color: "#f97316" },
+    { text: "Seamless tracking from order to delivery.", color: "#f59e0b" },
+    { text: "Trusted seller badges.", color: "#eab308" },
+    { text: "Stronger together as a community.", color: "#84cc16" },
+    { text: "Support sustainable production.", color: "#22c55e" },
+    { text: "Fair trade, happy customers.", color: "#10b981" },
+    { text: "Respect for craft, budget-friendly prices.", color: "#06b6d4" },
+    { text: "We grow with women’s work.", color: "#3b82f6" },
+    { text: "Fresh from your city, shop with confidence.", color: "#6366f1" },
+    { text: "Quality, care and transparency.", color: "#8b5cf6" },
+    { text: "The handmade you need is here.", color: "#d946ef" },
+    { text: "Good price, safe process, happy ending.", color: "#ec4899" },
+  ],
+  ar: [
+    { text: "هدفنا: دعم ميزانية ربّات البيوت.", color: "#e11d48" },
+    { text: "قيمة عمل المرأة يجب أن تُكرَّم.", color: "#c026d3" },
+    { text: "منتجات يدوية بأسعار عادلة.", color: "#7c3aed" },
+    { text: "نَكهات الحي إلى بابك.", color: "#2563eb" },
+    { text: "إنتاج طازج بأيادٍ ماهرة.", color: "#0ea5e9" },
+    { text: "حماية المنصّة مع كل طلب.", color: "#14b8a6" },
+    { text: "دعم كبير للمنتِجات الصُغرى.", color: "#059669" },
+    { text: "أسعار شفافة وتسليم واضح.", color: "#16a34a" },
+    { text: "دفع آمن وإرجاع سهل.", color: "#65a30d" },
+    { text: "اشترِ محليًا وادعم الاقتصاد.", color: "#ca8a04" },
+    { text: "أجر عادل للعمل وتوفير للعميل.", color: "#d97706" },
+    { text: "مذاقات منزلية وجمال مصنوع يدويًا.", color: "#ea580c" },
+    { text: "عناية في كل فئة إنتاج.", color: "#f97316" },
+    { text: "تتبع سلس من الطلب حتى التسليم.", color: "#f59e0b" },
+    { text: "شارات بائعات موثوقات.", color: "#eab308" },
+    { text: "نقوى معًا كمجتمع.", color: "#84cc16" },
+    { text: "ندعم الإنتاج المستدام.", color: "#22c55e" },
+    { text: "تجارة عادلة وزبائن سعداء.", color: "#10b981" },
+    { text: "احترام للحِرفة وأسعار مناسبة.", color: "#06b6d4" },
+    { text: "ننمو بعمل النساء.", color: "#3b82f6" },
+    { text: "طازج من مدينتك وتسوق بثقة.", color: "#6366f1" },
+    { text: "جودة وعناية وشفافية.", color: "#8b5cf6" },
+    { text: "كل ما تحتاجه من أعمال يدوية هنا.", color: "#d946ef" },
+    { text: "سعر جيد، عملية آمنة، نهاية سعيدة.", color: "#ec4899" },
+  ],
+  de: [
+    { text: "Ziel: Haushaltsbudgets von Frauen stärken.", color: "#e11d48" },
+    { text: "Frauenarbeit soll wertgeschätzt werden.", color: "#c026d3" },
+    { text: "Handgemachtes zum fairen Preis.", color: "#7c3aed" },
+    { text: "Nachbarschafts-Geschmack bis vor die Tür.", color: "#2563eb" },
+    { text: "Frische Produktion aus geübten Händen.", color: "#0ea5e9" },
+    { text: "Plattformschutz bei jeder Bestellung.", color: "#14b8a6" },
+    { text: "Große Unterstützung für kleine Anbieterinnen.", color: "#059669" },
+    { text: "Transparente Preise, klare Lieferung.", color: "#16a34a" },
+    { text: "Sichere Zahlung, einfache Rückgabe.", color: "#65a30d" },
+    { text: "Kauf lokal – stärke die Wirtschaft.", color: "#ca8a04" },
+    { text: "Faire Entlohnung, Kund:innen sparen.", color: "#d97706" },
+    { text: "Hausgemachter Geschmack, liebevolle Handarbeit.", color: "#ea580c" },
+    { text: "Sorgfalt in jeder Kategorie.", color: "#f97316" },
+    { text: "Nahtloses Tracking von Bestellung bis Lieferung.", color: "#f59e0b" },
+    { text: "Vertrauens-Abzeichen für Anbieterinnen.", color: "#eab308" },
+    { text: "Gemeinsam als Community stärker.", color: "#84cc16" },
+    { text: "Unterstütze nachhaltige Produktion.", color: "#22c55e" },
+    { text: "Fairer Handel, glückliche Kund:innen.", color: "#10b981" },
+    { text: "Respekt für Handwerk, faire Preise.", color: "#06b6d4" },
+    { text: "Wir wachsen mit Frauenarbeit.", color: "#3b82f6" },
+    { text: "Frisch aus deiner Stadt – sicher einkaufen.", color: "#6366f1" },
+    { text: "Qualität, Sorgfalt und Transparenz.", color: "#8b5cf6" },
+    { text: "Das Handgemachte, das du brauchst – hier.", color: "#d946ef" },
+    { text: "Guter Preis, sicherer Ablauf, gutes Ende.", color: "#ec4899" },
+  ],
+};
 
-/** Kategoriler (4 dil) */
+/* ----------------------------- KATEGORİLER ----------------------------- */
 const CATS = {
   tr: [
     { icon:"🍲", title:"Yemekler", subs:["Ev yemekleri","Börek-çörek","Çorba","Zeytinyağlı","Pilav-makarna","Et-tavuk","Kahvaltılık","Meze","Dondurulmuş","Çocuk öğünleri","Diyet/vegan/gf"] },
@@ -109,32 +192,32 @@ const CATS = {
     { icon:"🧸", title:"Amigurumi & Toys (decor)", subs:["Keychain","Magnet","Collectible figure","Decor doll/character","Named amigurumi"] },
   ],
   ar: [
-    { icon:"🍲", title:"وجبات", subs:["بيتي","معجنات مالحة","شوربة","أكلات زيت الزيتون","أرز-معكرونة","لحم-دجاج","فطور","مقبلات","مجمدة","وجبات أطفال","نباتي/خالي جلوتين"] },
-    { icon:"🎂", title:"كعك وحلويات", subs:["كيك طبقات","كب كيك","بسكويت","شرباتية","ألبان","تشيز كيك","دايت","شوكولاتة/حلوى","طقم عيد ميلاد"] },
+    { icon:"🍲", title:"وجبات", subs:["بيتي","معجنات مالحة","شوربة","أكلات بزيت الزيتون","أرز/معكرونة","لحم/دجاج","فطور","مقبلات","مجمدة","وجبات أطفال","نباتي/خالٍ من الغلوتين"] },
+    { icon:"🎂", title:"كعك وحلويات", subs:["كيك طبقات","كب كيك","بسكويت","حلويات بالقطر","حلويات ألبان","تشيز كيك","دايت","شوكولاتة/حلوى","طقم عيد ميلاد"] },
     { icon:"🫙", title:"مربى • مخلل • صوص", subs:["مربى","دبس","مخللات","صلصة طماطم/فلفل","حار","معجون","خل","معلبات"] },
-    { icon:"🌾", title:"مأكولات تراثية/تحضيرات الشتاء", subs:["مكرونة بيتية","طرحنة","يوفكا","مانطي","مجففات","معجون","خل","معلبات"] },
-    { icon:"🥗", title:"حمية/نباتي/خالي جلوتين", subs:["أطباق صحية","نباتي","مخبوزات GF","حلويات بدون سكر","كيتو","سناك بروتين"] },
-    { icon:"💍", title:"إكسسوارات", subs:["أساور","قلائد","أقراط","خواتم","خلخال","بروش","طقم","مخصص بالاسم","ماكرامه","أحجار","ريزن","سلك"] },
-    { icon:"👶", title:"رضّع وأطفال", subs:["مجسّمات حيوانات/رضع","خشخيشة","عضّاضة تريكو","لعبة/كتاب قماشي","مونتيسوري","أطقم","حذاء/قبعة تريكو","بطانية","مريلة","طقم نفاس","اكسسوار شعر","ملابس يدوية"] },
+    { icon:"🌾", title:"تراثي / مؤونة الشتاء", subs:["مكرونة منزلية","طرحنة","يوفكا","مانطي","مجففات","معجون","خل","معلبات"] },
+    { icon:"🥗", title:"حمية / نباتي / خالٍ من الغلوتين", subs:["أطباق صحية","نباتي","مخبوزات GF","حلويات بدون سكر","كيتو","سناك بروتين"] },
+    { icon:"💍", title:"إكسسوارات", subs:["أساور","قلائد","أقراط","خواتم","خلخال","بروش","أطقم","مخصص بالاسم","ماكرامه","أحجار","ريزن","سلك"] },
+    { icon:"👶", title:"رضع وأطفال", subs:["مجسّمات","خشخيشة","عضّاضة تريكو","لعبة/كتاب قماشي","مونتيسوري","أطقم","حذاء/قبعة تريكو","بطانية","مريلة","طقم نفاس","اكسسوار شعر","ملابس يدوية"] },
     { icon:"🧶", title:"تريكو", subs:["جاكيت","بلوز","وشاح/قبعة","بونشو","شال","جوارب","طقم أطفال","صديري","وسادة/غطاء"] },
-    { icon:"✂️", title:"خياطة/تفصيل", subs:["تقصير/تصليح","تغيير سحاب","ستائر","مفارش سرير","مفرش طاولة","تفصيل خاص","بدلات"] },
+    { icon:"✂️", title:"خياطة/تفصيل", subs:["تقصير/تصليح","تغيير سحاب","ستائر","مفارش سرير","مفرش طاولة","تفصيل خاص","ملابس تنكرية"] },
     { icon:"🧵", title:"ماكرامه وديكور", subs:["تعليقة حائط","حامل نبات","ميدالية","إضاءة معلّقة","مفرش","سلة","رف/ديكور"] },
-    { icon:"🏠", title:"ديكور المنزل", subs:["أعمال فيلت","وسادة","زينة باب","صينية مزينة","إطار","صائد أحلام","لوحة"] },
+    { icon:"🏠", title:"ديكور المنزل", subs:["فيلت","وسادة","زينة باب","صينية مزخرفة","إطار","صائد أحلام","لوحة"] },
     { icon:"🕯️", title:"شموع وروائح", subs:["شموع صويا/نحل","حجر عطري","معطر غرف","بخور","شمعة جل","أطقم هدايا"] },
     { icon:"🧼", title:"صابون طبيعي وتجميلي", subs:["صابون زيت زيتون","أعشاب","شامبو صلب","بلسم شفاه","كريم/مرهم","ملح حمام","أكياس لافندر"] },
-    { icon:"🧸", title:"أميجورومي وألعاب (ديكور)", subs:["ميدالية","مغناطيس","فيجور تجميعي","دمية ديكور","أميجورومي باسم"] },
+    { icon:"🧸", title:"أميجورومي وألعاب (ديكور)", subs:["ميدالية","مغناطيس","فيجور","دمية ديكور","أميجورومي بالاسم"] },
   ],
   de: [
-    { icon:"🍲", title:"Speisen", subs:["Hausmannskost","Herzhafte Backwaren","Suppe","Olivenölgerichte","Reis-Pasta","Fleisch-Hähnchen","Frühstück","Meze","Tiefgekühlt","Kindermahlzeiten","Diät/Vegan/GF"] },
-    { icon:"🎂", title:"Torten & Süßes", subs:["Sahnetorte","Cupcake","Kekse","Sirupgebäck","Milchdesserts","Käsekuchen","Diät Desserts","Schoko/Bonbon","Geburtstags-Sets"] },
-    { icon:"🫙", title:"Marmelade • Pickles • Soßen", subs:["Marmelade","Melasse","Eingelegtes","Tomaten-/Pfeffersoße","Scharfsoße","Paste","Essig","Eingewecktes"] },
-    { icon:"🌾", title:"Regional / Wintervorrat", subs:["Nudeln hausgemacht","Tarhana","Yufka","Manti","Getrocknetes","Paste","Essig","Vorrat"] },
-    { icon:"🥗", title:"Diät / Vegan / Glutenfrei", subs:["Fit Bowls","Vegane Speisen","GF Bäckerei","Zuckerfrei","Keto","Protein-Snacks"] },
-    { icon:"💍", title:"Schmuck", subs:["Armband","Kette","Ohrringe","Ring","Fußkettchen","Brosche","Sets","Personalisierte","Makramee","Edelsteine","Harz","Draht"] },
-    { icon:"👶", title:"Baby & Kinder", subs:["Tier/Baby-Figuren","Rassel","Beißring Strick","Stoffspielzeug/-buch","Montessori","Sets","Strick-Schühchen/Mützen","Babydecke","Lätzchen","Wochenbett-Set","Haar-Accessoire","Handgemachte Kleidung"] },
-    { icon:"🧶", title:"Strickwaren", subs:["Cardigan","Pullover","Schal-Mütze","Poncho","Tuch","Socken","Baby-Set","Weste","Kissen/Decke"] },
+    { icon:"🍲", title:"Speisen", subs:["Hausmannskost","Herzhafte Backwaren","Suppe","Olivenölgerichte","Reis/Pasta","Fleisch/Hähnchen","Frühstück","Meze","Tiefgekühlt","Kindermahlzeiten","Diät/Vegan/GF"] },
+    { icon:"🎂", title:"Torten & Süßes", subs:["Sahnetorte","Cupcake","Kekse","Sirupgebäck","Milchdesserts","Käsekuchen","Diät-Desserts","Schoko/Bonbon","Geburtstags-Sets"] },
+    { icon:"🫙", title:"Marmelade • Pickles • Soßen", subs:["Marmelade","Melasse","Eingelegtes","Tomaten/Pfeffersoße","Scharfsoße","Paste","Essig","Eingewecktes"] },
+    { icon:"🌾", title:"Regional / Wintervorrat", subs:["Hausgem. Nudeln","Tarhana","Yufka","Manti","Getrocknetes","Paste","Essig","Vorrat"] },
+    { icon:"🥗", title:"Diät / Vegan / Glutenfrei", subs:["Fit Bowls","Vegan","GF-Bäckerei","Zuckerfrei","Keto","Protein-Snacks"] },
+    { icon:"💍", title:"Schmuck", subs:["Armband","Kette","Ohrringe","Ring","Fußkettchen","Brosche","Sets","Personalisiert","Makramee","Edelsteine","Harz","Draht"] },
+    { icon:"👶", title:"Baby & Kinder", subs:["Figuren","Rassel","Beißring Strick","Stoffspielzeug/Buch","Montessori","Sets","Schühchen/Mützen","Babydecke","Lätzchen","Wochenbett-Set","Haar-Accessoire","Handgemachte Kleidung"] },
+    { icon:"🧶", title:"Strickwaren", subs:["Cardigan","Pullover","Schal/Mütze","Poncho","Tuch","Socken","Baby-Set","Weste","Kissen/Decke"] },
     { icon:"✂️", title:"Nähen / Schneiderei", subs:["Saum/Reparatur","Reißverschluss","Gardinen","Bettwäsche","Tischdecke","Maßanfertigung","Kostüm"] },
-    { icon:"🧵", title:"Makramee & Deko", subs:["Wandbehang","Pflanzenhänger","Schlüsselanh.","Pendelleuchte","Tischläufer","Korb","Regal/Deko"] },
+    { icon:"🧵", title:"Makramee & Deko", subs:["Wandbehang","Pflanzenhänger","Schlüsselanh.","Pendelleuchte","Läufer","Korb","Regal/Deko"] },
     { icon:"🏠", title:"Wohndeko & Accessoires", subs:["Filzarbeiten","Kissen","Türkranz","Tablettdeko","Rahmen","Traumfänger","Bild"] },
     { icon:"🕯️", title:"Kerzen & Düfte", subs:["Soja/Bienenwachs","Duftstein","Raumspray","Weihrauch","Gelkerze","Geschenksets"] },
     { icon:"🧼", title:"Naturseife & Kosmetik", subs:["Olivenölseife","Kräuterseifen","Festes Shampoo","Lippenbalsam","Creme/Salbe","Badesalz","Lavendelsäckchen"] },
@@ -142,7 +225,7 @@ const CATS = {
   ],
 };
 
-/** ---- Dil seçimi (kalıcı) ---- */
+/* ----------------------------- DİL KANCASI ----------------------------- */
 function useLang() {
   const [lang, setLang] = useState("tr");
   useEffect(() => {
@@ -154,16 +237,19 @@ function useLang() {
   return { lang, setLang, t };
 }
 
-/** ---- Sayfa ---- */
+/* ----------------------------- SAYFA ----------------------------- */
 export default function Home() {
   const { lang, setLang, t } = useLang();
+  const phrases = useMemo(() => PHRASES[lang] || PHRASES.tr, [lang]);
   const [i, setI] = useState(0);
+  const current = phrases[i] || phrases[0];
+  const accent = current?.color || "#111827";
 
-  // Dönen motto
+  // 22 sn'de bir metin değişsin (yumuşak geçiş)
   useEffect(() => {
-    const id = setInterval(() => setI(x => (x + 1) % t.motto.length), 2800);
+    const id = setInterval(() => setI(x => (x + 1) % phrases.length), 22000);
     return () => clearInterval(id);
-  }, [t.motto]);
+  }, [phrases.length]);
 
   const go = (href) => { window.location.href = href; };
   const needAuth = (role) => {
@@ -175,22 +261,18 @@ export default function Home() {
 
   return (
     <main className="wrap">
-      {/* Global Dil Dropdown (her sayfada görünmesi için basit, sabit konum) */}
+      {/* Dil seçimi */}
       <div className="langbox">
-        <select
-          aria-label="Language"
-          value={lang}
-          onChange={(e)=>setLang(e.target.value)}
-        >
+        <select aria-label="Language" value={lang} onChange={(e)=>setLang(e.target.value)}>
           {SUPPORTED.map(k => <option key={k} value={k}>{LOCALE_LABEL[k]}</option>)}
         </select>
       </div>
 
-      <section className="hero">
+      <section className="hero" style={{ "--accent": accent }}>
         <img src="/assets/images/logo.png" alt={t.brand} width="96" height="96" className="logo"/>
-        <h1>{t.brand}</h1>
-        <h2>{t.heroTitle}</h2>
-        <p key={i} className="lead fade">{t.motto[i]}</p>
+        <h1 className="title">{t.brand}</h1>
+        <h2 className="subtitle">{t.heroTitle}</h2>
+        <p key={i} className="lead phrase">{current.text}</p>
 
         <div className="ctaRow">
           <SignedOut>
@@ -213,14 +295,9 @@ export default function Home() {
                 <span className="icon" aria-hidden>{c.icon}</span>
                 <h4>{c.title}</h4>
               </div>
-
-              {/* Daha toplu görünüm: 3 sütun chip grid */}
               <div className="subsGrid">
-                {c.subs.map((s, k)=>(
-                  <span key={k} className="chip">{s}</span>
-                ))}
+                {c.subs.map((s, k)=>(<span key={k} className="chip">{s}</span>))}
               </div>
-
               <div className="actions">
                 <SignedOut>
                   <button className="mini dark"  onClick={()=>needAuth("customer")}>{t.orderNow}</button>
@@ -255,21 +332,31 @@ export default function Home() {
         }
         @keyframes drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
-        .wrap{maxWidth:1120px; max-width:1120px; margin:0 auto; padding:32px 20px;}
+        .wrap{max-width:1120px; margin:0 auto; padding:32px 20px;}
 
+        /* --- Dil kutusu --- */
         .langbox{
           position:fixed; top:12px; right:12px; z-index:50;
           background:rgba(255,255,255,.9); border:1px solid #e5e7eb; border-radius:12px; padding:6px 10px; backdrop-filter:blur(8px);
         }
         .langbox select{ border:none; background:transparent; font-weight:600; cursor:pointer; }
 
+        /* --- Hero --- */
         .hero{display:grid; place-items:center; text-align:center; gap:10px; padding:72px 0 34px;}
         .logo{filter: drop-shadow(0 10px 24px rgba(0,0,0,.18)); border-radius:20px}
-        h1{margin:8px 0 0; font-size:48px; letter-spacing:.3px}
-        h2{margin:2px 0 6px; font-size:24px; color:#1f2937}
-        .lead{max-width:820px; color:var(--muted); margin:0 auto 18px; font-size:17px}
-        .fade{animation:fade 400ms ease}
-        @keyframes fade{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+        .title,.subtitle{transition: color .6s ease;}
+        .title{margin:8px 0 0; font-size:48px; color: var(--accent);}
+        .subtitle{margin:2px 0 6px; font-size:24px; color: var(--accent);}
+        .lead{
+          max-width:820px; margin:8px auto 18px; font-size:18px; color: var(--accent);
+          transition: color .6s ease;
+        }
+        /* Motto metni için yumuşak fade+slide */
+        .phrase{animation: fadeSlide .7s ease;}
+        @keyframes fadeSlide{
+          from{opacity:0; transform: translateY(6px)}
+          to{opacity:1; transform: none}
+        }
 
         .ctaRow{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:8px}
         .btnPrimary{
@@ -281,6 +368,7 @@ export default function Home() {
           background:var(--paperA); border:1px solid var(--lineA); color:#111827; backdrop-filter: blur(8px);
         }
 
+        /* --- Kategoriler --- */
         .cats h3{font-size:22px; margin:30px 0 14px; text-align:center;}
         .grid{
           display:grid; gap:16px;
@@ -288,31 +376,25 @@ export default function Home() {
         }
         .card{
           border-radius: 18px; padding:16px;
-          background: var(--paperA); border: 1px solid var(--lineA); 
+          background: var(--paperA); border: 1px solid var(--lineA);
           backdrop-filter: blur(8px);
           box-shadow: 0 12px 28px rgba(0,0,0,.08);
           transition: transform .2s ease, box-shadow .2s ease, filter .5s linear;
         }
         .card:hover{ transform: translateY(-4px); box-shadow:0 16px 36px rgba(0,0,0,.12); }
-
-        /* Dinamik renk: her karta farklı hue + akış animasyonu */
+        /* Her karta farklı hue akışı */
         .hue{ animation: hue 12s linear infinite; }
         @keyframes hue{ from{ filter:hue-rotate(calc(var(--i)*12deg)); } to{ filter:hue-rotate(calc(var(--i)*12deg + 360deg)); } }
 
         .cardHead{display:flex; align-items:center; gap:10px; margin-bottom:8px}
         .icon{font-size:22px}
         h4{margin:0; font-size:18px}
-
-        /* Daha toplu: 3 sütun chip grid, düzenli yığın */
-        .subsGrid{
-          display:grid; gap:8px; grid-template-columns: repeat(3, minmax(0,1fr));
-        }
+        .subsGrid{ display:grid; gap:8px; grid-template-columns: repeat(3, minmax(0,1fr)); }
         .chip{
           display:block; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
           padding:8px 10px; border-radius:12px; font-size:12px;
           background: rgba(255,255,255,.92); border:1px solid #e5e7eb;
         }
-
         .actions{display:flex; gap:8px; justify-content:center; margin-top:12px}
         .mini{
           padding:9px 12px; border-radius:10px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-weight:600;
