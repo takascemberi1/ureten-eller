@@ -1,10 +1,20 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+// middleware.js
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-export default clerkMiddleware();
+// Sadece /portal/... korumalı olsun, diğer sayfalar serbest
+const isProtectedRoute = createRouteMatcher(["/portal(.*)"]);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    await auth().protect(); // giriş yoksa Clerk login akışına yollar
+  }
+});
 
 export const config = {
   matcher: [
-    "/((?!_next|.*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Next.js internal ve statikleri atla
+    "/((?!_next|.*\\..*).*)",
+    // API/trpc her zaman çalışsın
     "/(api|trpc)(.*)",
   ],
 };
