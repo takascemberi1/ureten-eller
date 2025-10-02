@@ -253,7 +253,6 @@ export default function Home() {
 
   const go = (href) => { window.location.href = href; };
   const needAuth = (role) => {
-    alert(t.needAuth);
     window.location.href = `/login?role=${role}`;
   };
 
