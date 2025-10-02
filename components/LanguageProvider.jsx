@@ -1,11 +1,8 @@
+import { trTR, enUS, arSA, deDE } from "@clerk/localizations";
 // components/LanguageProvider.jsx
 "use client";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { ClerkProvider, useUser } from "@clerk/nextjs";
-import trTR from "@clerk/localizations/tr-TR";
-import enUS from "@clerk/localizations/en-US";
-import arSA from "@clerk/localizations/ar-SA";
-import deDE from "@clerk/localizations/de-DE";
 import { SUPPORTED, LOCALE_LABELS, STR } from "../lib/i18n";
 
 const ClerkLocales = { tr: trTR, en: enUS, ar: arSA, de: deDE };
