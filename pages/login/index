@@ -18,7 +18,7 @@ const STR = {
     signUp: "Kayıt Ol",
     useEmail: "E‑posta kullan",
     usePhone: "Telefon kullan",
-    email: "E‑posta",
+    email: "E‑posta veya kullanıcı adı",
     phone: "Telefon",
     username: "Kullanıcı adı",
     fullName: "Ad Soyad",
@@ -48,6 +48,9 @@ const STR = {
     secured: "Clerk güvencesi ile",
     required: "Lütfen tüm zorunlu alanları doldur.",
     mismatch: "Şifreler eşleşmiyor.",
+    roleTitle: "Hangi portal?",
+    roleSeller: "Üreten El",
+    roleCustomer: "Müşteri",
   },
   en: {
     brand: "Ureten Eller",
@@ -57,7 +60,7 @@ const STR = {
     signUp: "Sign Up",
     useEmail: "Use email",
     usePhone: "Use phone",
-    email: "Email",
+    email: "Email or username",
     phone: "Phone",
     username: "Username",
     fullName: "Full name",
@@ -87,6 +90,9 @@ const STR = {
     secured: "Secured by Clerk",
     required: "Please fill all required fields.",
     mismatch: "Passwords do not match.",
+    roleTitle: "Choose a portal",
+    roleSeller: "Maker",
+    roleCustomer: "Customer",
   },
   ar: {
     brand: "أُنتِج بالأيادي",
@@ -96,7 +102,7 @@ const STR = {
     signUp: "إنشاء حساب",
     useEmail: "استخدام البريد",
     usePhone: "استخدام الهاتف",
-    email: "البريد الإلكتروني",
+    email: "البريد أو اسم المستخدم",
     phone: "الهاتف",
     username: "اسم المستخدم",
     fullName: "الاسم الكامل",
@@ -118,14 +124,17 @@ const STR = {
     noAcc: "لا تملك حسابًا؟",
     verifyTitleEmail: "التحقق عبر البريد",
     verifyTitlePhone: "التحقق عبر الرسائل",
-    codeHelpEmail: "أدخل الرمز المكون من 6 أرقام المرسل إلى بريدك.",
-    codeHelpPhone: "أدخل الرمز المكون من 6 أرقام المرسل إلى هاتفك.",
+    codeHelpEmail: "أدخل الرمز المكون من 6 أرقام من البريد.",
+    codeHelpPhone: "أدخل الرمز المكون من 6 أرقام من الرسالة.",
     code: "رمز التحقق",
     back: "رجوع",
     verify: "تحقق",
     secured: "محمي بواسطة Clerk",
     required: "يرجى ملء جميع الحقول المطلوبة.",
     mismatch: "كلمتا المرور غير متطابقتين.",
+    roleTitle: "أي بوابة؟",
+    roleSeller: "منتِجة",
+    roleCustomer: "عميل",
   },
   de: {
     brand: "Ureten Eller",
@@ -135,7 +144,7 @@ const STR = {
     signUp: "Registrieren",
     useEmail: "E‑Mail verwenden",
     usePhone: "Telefon verwenden",
-    email: "E‑Mail",
+    email: "E‑Mail oder Benutzername",
     phone: "Telefon",
     username: "Benutzername",
     fullName: "Vollständiger Name",
@@ -165,6 +174,9 @@ const STR = {
     secured: "Geschützt durch Clerk",
     required: "Bitte alle Pflichtfelder ausfüllen.",
     mismatch: "Passwörter stimmen nicht überein.",
+    roleTitle: "Welches Portal?",
+    roleSeller: "Anbieterin",
+    roleCustomer: "Kund:in",
   },
 };
 
@@ -173,14 +185,20 @@ function useLang() {
   useEffect(() => {
     const saved = typeof window !== "undefined" && localStorage.getItem("lang");
     if (saved && SUPPORTED.includes(saved)) setLang(saved);
+    else setLang("tr"); // TR varsayılan
   }, []);
-  useEffect(() => { if (typeof window !== "undefined") localStorage.setItem("lang", lang); }, [lang]);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("lang", lang);
+      try { document.documentElement.lang = lang; } catch {}
+    }
+  }, [lang]);
   const t = useMemo(() => STR[lang] || STR.tr, [lang]);
   return { lang, setLang, t };
 }
 
 /* ------------------------------------------------------------------
-   PAGE
+   PAGE — Custom Turkish-first UI (NO Clerk default texts)
 ------------------------------------------------------------------ */
 export default function LoginRegister() {
   const { lang, setLang, t } = useLang();
@@ -224,7 +242,7 @@ export default function LoginRegister() {
       if (!signInLoaded) return;
       await signIn.authenticateWithRedirect({
         strategy, // 'oauth_google' | 'oauth_facebook'
-        redirectUrl: "/",
+        redirectUrl: "/login",
         redirectUrlComplete: role === "seller" ? "/portal/seller" : "/portal/customer",
       });
     } catch (e) {
@@ -239,17 +257,14 @@ export default function LoginRegister() {
     setErr(""); setLoading(true);
     try {
       if (usePhone) {
-        // Passwordless SMS sign-in
         await signIn.create({ identifier: phone });
-        await signIn.prepareFirstFactor({ strategy: "phone_code", phoneNumberId: undefined });
+        await signIn.prepareFirstFactor({ strategy: "phone_code" });
         setStep("verify-phone");
       } else {
-        // Email/username + password
         const res = await signIn.create({ identifier: email, password });
         if (res.status === "complete") {
           await push(role === "seller" ? "/portal/seller" : "/portal/customer");
         } else if (res.status === "needs_first_factor") {
-          // fallback: email code factor if enabled
           await signIn.prepareFirstFactor({ strategy: "email_code" });
           setStep("verify-email");
         } else {
@@ -293,7 +308,6 @@ export default function LoginRegister() {
       const [firstName, ...rest] = fullName.trim().split(" ");
       const lastName = rest.join(" ") || "";
 
-      // create
       const payload = {
         password,
         username,
@@ -305,7 +319,6 @@ export default function LoginRegister() {
 
       await signUp.create(payload);
 
-      // prepare verification
       if (usePhone) {
         await signUp.preparePhoneNumberVerification({ strategy: "phone_code" });
         setStep("verify-phone");
@@ -356,6 +369,11 @@ export default function LoginRegister() {
           </div>
         </header>
 
+        {/* Role hint (from query) */}
+        <div className="roleHint" aria-live="polite">
+          <small>{t.roleTitle}: <strong>{role === 'seller' ? t.roleSeller : t.roleCustomer}</strong></small>
+        </div>
+
         {/* Mode Tabs */}
         <div className="tabs">
           <button className={mode==='signin'? 'tab active':'tab'} onClick={()=>{setStep('form'); setMode('signin')}}>{t.signIn}</button>
@@ -374,7 +392,7 @@ export default function LoginRegister() {
             {!usePhone ? (
               <label className="lab">
                 <span>{t.email}</span>
-                <input required type="text" value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@or.kullanici" />
+                <input required type="text" value={email} onChange={e=>setEmail(e.target.value)} placeholder="e‑posta veya kullanıcı adı" />
               </label>
             ) : (
               <label className="lab">
@@ -477,7 +495,7 @@ export default function LoginRegister() {
           </form>
         )}
 
-        {/* VERIFY STEP (EMAIL or PHONE) — used by both signin & signup */}
+        {/* VERIFY STEP */}
         {step !== 'form' && (
           <form onSubmit={mode==='signup' ? onSignUpVerify : onSignInVerify} className="form">
             <h2 className="vtitle">{step==='verify-email' ? t.verifyTitleEmail : t.verifyTitlePhone}</h2>
@@ -510,6 +528,8 @@ export default function LoginRegister() {
         .head{display:flex; gap:10px; align-items:center; margin-bottom:8px}
         .titles h1{margin:0; font-size:22px}
         .sub{margin:2px 0 0; color:#475569}
+
+        .roleHint{display:flex; justify-content:center; margin:6px 0 0; color:#64748b}
 
         .tabs{display:flex; gap:8px; background:rgba(255,255,255,.6); border:1px solid #e5e7eb; padding:6px; border-radius:12px; width:max-content; margin:10px auto}
         .tab{border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; color:#111827;}
