@@ -147,7 +147,7 @@ export default function LoginRegister(){
         username,
         firstName,
         lastName,
-        publicMetadata:{ role, lang, city, full_name: fullName },
+        unsafeMetadata:{ role, lang, city, full_name: fullName },
       });
       await signUp.prepareEmailAddressVerification({ strategy:"email_code" });
       setStep("verify-email");

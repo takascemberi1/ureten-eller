@@ -13,7 +13,7 @@ import { useLang } from "../components/LanguageProvider";
 function HeaderNav() {
   const { user } = useUser();
   const { lang, t } = useLang(); // senin i18n hook'unu kullanıyoruz
-  const role = user?.publicMetadata?.role || "customer";
+  const role = ((user?.publicMetadata?.role ?? user?.unsafeMetadata?.role)) || "customer";
 
   // Header'da kullanacağımız ek metinler (LanguageProvider'da olmayabilir),
   // burada her dil için açıkça veriyoruz — mevcut i18n'i bozmaz.
