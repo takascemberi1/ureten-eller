@@ -1,88 +1,30 @@
-// app/api/ads/public/route.js
-import { NextResponse } from "next/server";
+export async function GET(request) {
+  const url = new URL(request.url);
+  const limit = parseInt(url.searchParams.get('limit') || '20', 10);
 
-/** Ensure this endpoint is never statically cached */
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+  // Ortam değişkenlerinden ya da boş dizi
+  let featured = [];
+  let latest = [];
+  try { featured = JSON.parse(process.env.FEATURED_ADS || '[]'); } catch {}
+  try { latest   = JSON.parse(process.env.ADS || '[]'); } catch {}
 
-/**
- * In-memory store (no fake numbers/data prefilled).
- * Starts empty; you can POST to add real ads.
- */
-const store = {
-  featured: [],
-  latest: [],
-};
-
-export async function GET(req) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const limit = clampInt(searchParams.get("limit"), 20, 1, 100);
-    const cat = searchParams.get("cat") || "";
-
-    // Filter (optional by category)
-    let featured = store.featured;
-    let latest = store.latest;
-    if (cat) {
-      featured = featured.filter((a) => (a.cat || "") === cat);
-      latest = latest.filter((a) => (a.cat || "") === cat);
-    }
-
-    // Shape expected by frontend: { items, featured, latest }
-    const latestLimited = latest.slice(0, limit);
-    const payload = {
-      featured,
-      latest: latestLimited,
-      items: latestLimited,
-    };
-
-    return NextResponse.json(payload, {
-      status: 200,
-      headers: { "Cache-Control": "no-store" },
-    });
-  } catch (err) {
-    return NextResponse.json(
-      { error: err?.message || "Internal error" },
-      { status: 500 }
-    );
+  // Hiç ilan yoksa demo veri
+  if (!Array.isArray(latest) || latest.length === 0) {
+    latest = [
+      { id:"demo-1", title:"Demo İlan 1", cat:"Örnek", price:"₺100", img:"" },
+      { id:"demo-2", title:"Demo İlan 2", cat:"Örnek", price:"₺150", img:"" },
+      { id:"demo-3", title:"Demo İlan 3", cat:"Örnek", price:"₺200", img:"" }
+    ];
   }
-}
 
-export async function POST(req) {
-  try {
-    const body = await req.json();
-    const { title, cat = "", price = "", img = "", url = "", isFeatured = false } =
-      body || {};
+  const body = {
+    items: latest.slice(0, limit),
+    featured,
+    latest
+  };
 
-    if (!title || typeof title !== "string") {
-      return NextResponse.json({ error: "title required" }, { status: 400 });
-    }
-
-    const ad = {
-      id: Date.now().toString(36),
-      title: title.trim(),
-      cat,
-      price,
-      img,
-      url,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Add to stores (newest first)
-    store.latest.unshift(ad);
-    if (isFeatured) store.featured.unshift(ad);
-
-    return NextResponse.json({ ok: true, ad }, { status: 201 });
-  } catch (err) {
-    return NextResponse.json(
-      { error: err?.message || "Invalid JSON" },
-      { status: 400 }
-    );
-  }
-}
-
-function clampInt(v, def, min, max) {
-  const n = parseInt(v ?? def, 10);
-  if (Number.isNaN(n)) return def;
-  return Math.max(min, Math.min(max, n));
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { "Content-Type": "application/json" }
+  });
 }
