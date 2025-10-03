@@ -1,23 +1,20 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useAuth, useUser, SignedIn, SignedOut } from "@clerk/nextjs";
 
-/* --- basit i18n (TR varsayılan) --- */
-const SUPPORTED = ["tr","en","ar","de"];
+/* --- i18n (TR varsayılan) --- */
+const SUP = ["tr","en","ar","de"];
 const STR = {
   tr: {
     title:"Profil",
-    hello:"Merhaba",
     fullName:"Ad Soyad",
     email:"E-posta",
-    city:"Şehir",
     il:"İl",
     ilce:"İlçe",
-    username:"Kullanıcı adı",
+    settings:"Ayarlar",
     save:"Kaydet",
     cancel:"Vazgeç",
-    settings:"Ayarlar",
     changePwd:"Şifreyi Değiştir",
     goSecurity:"Güvenlik Sayfasına Git",
     rating:"Yıldız ver",
@@ -29,103 +26,115 @@ const STR = {
     uploading:"Yükleniyor…",
     saved:"Kaydedildi",
     error:"Bir hata oluştu",
+    pwdNew:"Yeni şifre",
+    pwdNew2:"Yeni şifre (tekrar)",
+    mismatch:"Şifreler eşleşmiyor."
   },
-  en:{ // kısa çeviri
-    title:"Profile", hello:"Hello", fullName:"Full Name", email:"Email", city:"City", il:"Province", ilce:"District",
-    username:"Username", save:"Save", cancel:"Cancel", settings:"Settings", changePwd:"Change Password", goSecurity:"Open Security Page",
+  en:{ title:"Profile", fullName:"Full Name", email:"Email", il:"Province", ilce:"District", settings:"Settings",
+    save:"Save", cancel:"Cancel", changePwd:"Change Password", goSecurity:"Open Security Page",
     rating:"Rate", sellerTabs:{ live:"Live", pending:"Pending", expired:"Expired" }, noAds:"No listings.",
     legal:{ privacy:"Privacy", about:"About", contact:"Contact", terms:"Terms", kvkk:"KVKK Notice", distance:"Distance Sales", returns:"Shipping & Returns" },
     bottom:{ home:"Home", messages:"Messages", noti:"Notifications" },
-    upload:"Change Photo", uploading:"Uploading…", saved:"Saved", error:"Something went wrong",
+    upload:"Change Photo", uploading:"Uploading…", saved:"Saved", error:"Something went wrong", pwdNew:"New password", pwdNew2:"Repeat password", mismatch:"Passwords do not match."
   },
-  ar:{ title:"الملف الشخصي", hello:"مرحبًا", fullName:"الاسم الكامل", email:"البريد", city:"المدينة", il:"الولاية", ilce:"الحي",
-    username:"اسم المستخدم", save:"حفظ", cancel:"إلغاء", settings:"إعدادات", changePwd:"تغيير كلمة المرور", goSecurity:"صفحة الأمان",
+  ar:{ title:"الملف الشخصي", fullName:"الاسم الكامل", email:"البريد", il:"الولاية", ilce:"الحي", settings:"إعدادات",
+    save:"حفظ", cancel:"إلغاء", changePwd:"تغيير كلمة المرور", goSecurity:"صفحة الأمان",
     rating:"قيّم", sellerTabs:{ live:"منشور", pending:"بانتظار", expired:"منتهي" }, noAds:"لا توجد إعلانات.",
     legal:{ privacy:"الخصوصية", about:"من نحن", contact:"اتصال", terms:"الشروط", kvkk:"إشعار KVKK", distance:"البيع عن بعد", returns:"التسليم والإرجاع" },
     bottom:{ home:"الرئيسية", messages:"الرسائل", noti:"الإشعارات" },
-    upload:"تغيير الصورة", uploading:"جارٍ الرفع…", saved:"تم الحفظ", error:"حدث خطأ",
+    upload:"تغيير الصورة", uploading:"جارٍ الرفع…", saved:"تم الحفظ", error:"حدث خطأ", pwdNew:"كلمة مرور جديدة", pwdNew2:"تأكيد كلمة المرور", mismatch:"كلمتا المرور غير متطابقتين."
   },
-  de:{ title:"Profil", hello:"Hallo", fullName:"Name", email:"E-Mail", city:"Stadt", il:"Bundesland", ilce:"Bezirk",
-    username:"Benutzername", save:"Speichern", cancel:"Abbrechen", settings:"Einstellungen", changePwd:"Passwort ändern", goSecurity:"Sicherheitsseite",
+  de:{ title:"Profil", fullName:"Name", email:"E-Mail", il:"Bundesland", ilce:"Bezirk", settings:"Einstellungen",
+    save:"Speichern", cancel:"Abbrechen", changePwd:"Passwort ändern", goSecurity:"Sicherheitsseite",
     rating:"Bewerten", sellerTabs:{ live:"Aktiv", pending:"Ausstehend", expired:"Abgelaufen" }, noAds:"Keine Inserate.",
     legal:{ privacy:"Datenschutz", about:"Über uns", contact:"Kontakt", terms:"Nutzungsbedingungen", kvkk:"KVKK-Hinweis", distance:"Fernabsatz", returns:"Lieferung & Rückgabe" },
     bottom:{ home:"Startseite", messages:"Nachrichten", noti:"Benachr." },
-    upload:"Foto ändern", uploading:"Lädt…", saved:"Gespeichert", error:"Fehler aufgetreten",
+    upload:"Foto ändern", uploading:"Lädt…", saved:"Gespeichert", error:"Fehler aufgetreten", pwdNew:"Neues Passwort", pwdNew2:"Passwort wiederholen", mismatch:"Passwörter stimmen nicht überein."
   }
 };
-
 function useLang(){
   const [lang,setLang]=useState("tr");
-  useEffect(()=>{ const s=localStorage.getItem("lang"); if(s&&SUPPORTED.includes(s)) setLang(s);},[]);
+  useEffect(()=>{ const s=localStorage.getItem("lang"); if(s&&SUP.includes(s)) setLang(s);},[]);
   const t = useMemo(()=>STR[lang]||STR.tr,[lang]); return {t,lang,setLang};
 }
 
+/* --- Sayfa --- */
 export default function ProfilePage(){
   const { t } = useLang();
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const { user, isLoaded: userLoaded } = useUser();
 
-  // local state
+  const firstLoad = useRef(true);
+
+  // rol & form
   const [role,setRole]=useState("customer"); // seller | customer
   const [rating,setRating]=useState(0);
   const [settingsOpen,setSettingsOpen]=useState(false);
   const [busy,setBusy]=useState(false);
   const [msg,setMsg]=useState("");
-
-  // form state (settings)
   const [form,setForm]=useState({
     fullName:"",
     username:"",
     il:"",
     ilce:"",
-    city:"",
     newPwd:"",
-    newPwd2:"",
+    newPwd2:""
   });
-
-  // ads (seller)
-  const [tab,setTab]=useState("live"); // live | pending | expired
+  const [tab,setTab]=useState("live");
   const [ads,setAds]=useState({ live:[], pending:[], expired:[] });
 
-  // guards
+  // Guard
   useEffect(()=>{
     if(!isLoaded) return;
     if(!isSignedIn) router.replace("/login");
   },[isLoaded,isSignedIn,router]);
 
-  // load user info
+  // Load user + yerel kalıcılık (F5 sonrası silinme olmasın)
   useEffect(()=>{
-    if(!userLoaded || !user) return;
+    if(!userLoaded || !user || !firstLoad.current) return;
+
     const meta = user.publicMetadata||{};
+    const savedFull = localStorage.getItem("full_name");
+    const savedIl = localStorage.getItem("il") || "";
+    const savedIlce = localStorage.getItem("ilce") || "";
+    const savedCity = localStorage.getItem("city") || "";
+
     const r = (meta.role==="seller"||meta.role==="customer")?meta.role:(localStorage.getItem("role")||"customer");
     setRole(r);
 
-    const fn = meta.full_name || [user.firstName,user.lastName].filter(Boolean).join(" ");
-    const city = meta.city || localStorage.getItem("city") || "";
-    const il = meta.il || "";
-    const ilce = meta.ilce || "";
-    setForm(f=>({ ...f,
+    const fn = savedFull || meta.full_name || [user.firstName,user.lastName].filter(Boolean).join(" ");
+    const il = savedIl || meta.il || "";
+    const ilce = savedIlce || meta.ilce || "";
+    const computedCity = savedCity || (il && ilce ? `${il}/${ilce}` : il || "");
+
+    setForm(f=>({
+      ...f,
       fullName: fn || "",
       username: user.username || "",
-      city, il, ilce,
+      il, ilce,
       newPwd:"", newPwd2:""
     }));
+
+    // City ekranı için localStorage’a kalsın
+    if(computedCity) localStorage.setItem("city", computedCity);
+
     const savedRating = Number(localStorage.getItem("my_rating")||0);
     setRating(Number.isFinite(savedRating)?savedRating:0);
 
-    // preload ads (from API ya da localStorage)
     preloadAds(r);
+    firstLoad.current = true; // kalsın ama bir daha overwrite etmesin
   },[userLoaded,user]);
 
   async function preloadAds(r){
-    // Önce localStorage (stub)
     try{
       const stub = JSON.parse(localStorage.getItem("ads_my")||"{}");
-      const live = stub.live||[], pending = stub.pending||[], expired = stub.expired||[];
-      setAds({ live, pending, expired });
+      setAds({
+        live: stub.live||[],
+        pending: stub.pending||[],
+        expired: stub.expired||[]
+      });
     }catch{}
-    // Sonra varsa API (yoksa sorun etme)
     try{
       const res = await fetch("/api/ads/my");
       if(res.ok){
@@ -139,6 +148,13 @@ export default function ProfilePage(){
     }catch{}
   }
 
+  function computedCity(){
+    const saved = localStorage.getItem("city") || "";
+    if(saved) return saved;
+    if(form.il && form.ilce) return `${form.il}/${form.ilce}`;
+    return form.il || "";
+  }
+
   function starClick(i){
     const val = i+1;
     setRating(val);
@@ -150,19 +166,22 @@ export default function ProfilePage(){
     if(!file) return;
     try{
       setBusy(true); setMsg(t.uploading);
-      // Clerk profil resmi güncelleme
       await user.setProfileImage({ file });
       setMsg(t.saved);
     }catch(err){
       console.error(err); setMsg(t.error);
-    }finally{ setBusy(false); setTimeout(()=>setMsg(""),1500); }
+    }finally{ setBusy(false); setTimeout(()=>setMsg(""),1200); }
   }
 
   async function saveSettings(e){
     e.preventDefault();
     setBusy(true); setMsg("");
+
+    // City’yi tek yerden türet ve kalıcı yap
+    const cityStr = (form.il && form.ilce) ? `${form.il}/${form.ilce}` : (form.il || "");
+
     try{
-      // 1) Clerk username / ad soyad güncelle
+      // Clerk profil güncelle
       const [firstName,...rest] = (form.fullName||"").trim().split(" ");
       const lastName = rest.join(" ");
       await user.update({
@@ -172,44 +191,42 @@ export default function ProfilePage(){
         publicMetadata:{
           ...(user.publicMetadata||{}),
           full_name: form.fullName,
-          city: form.city || form.il || "",
           il: form.il || "",
           ilce: form.ilce || "",
+          city: cityStr,
           role
         }
       });
 
-      // 2) Şifre değişimi için Clerk’in güvenlik sayfasına yönlendir (SDK ile doğrudan şifre değiştirme desteklenmeyebilir)
+      // Yerelde tut
+      localStorage.setItem("full_name", form.fullName||"");
+      localStorage.setItem("il", form.il||"");
+      localStorage.setItem("ilce", form.ilce||"");
+      localStorage.setItem("city", cityStr);
+
+      // Şifre girildiyse sadece yönlendir (SDK ile direkt değiştirmeyelim)
       if(form.newPwd || form.newPwd2){
         if(form.newPwd !== form.newPwd2){
-          setMsg("Şifreler eşleşmiyor."); setBusy(false); return;
+          setMsg(t.mismatch); setBusy(false); return;
         }
-        // Kullanıcıyı güvenlik sayfasına götürelim:
         window.open("/user/profile/security","_blank");
       }
 
-      // 3) Local fallbacks
-      localStorage.setItem("full_name", form.fullName||"");
-      localStorage.setItem("city", form.city||form.il||"");
-      localStorage.setItem("il", form.il||"");
-      localStorage.setItem("ilce", form.ilce||"");
-
       setMsg(t.saved);
-      setSettingsOpen(false);
+      setSettingsOpen(false); // <-- Kaydet’ten sonra panel kapanır
     }catch(err){
-      console.error(err); setMsg(t.error);
+      console.error(err);
+      setMsg(t.error);
     }finally{
-      setBusy(false); setTimeout(()=>setMsg(""),1500);
+      setBusy(false); setTimeout(()=>setMsg(""),1200);
     }
   }
-
-  function tkey(key){ return (STR[localStorage.getItem("lang")||"tr"]||STR.tr)[key]; }
 
   return (
     <div className="wrap">
       <SignedOut><p>Yönlendiriliyor…</p></SignedOut>
       <SignedIn>
-        {/* Header / gradient */}
+        {/* Header */}
         <div className="head">
           <div className="avatarBox">
             <div className="ring">
@@ -238,8 +255,8 @@ export default function ProfilePage(){
               <div className="val">{user?.primaryEmailAddress?.emailAddress || "—"}</div>
             </div>
             <div className="fldRow">
-              <label>{t.city}</label>
-              <div className="val">{form.city || form.il || "—"}</div>
+              <label>Şehir</label>
+              <div className="val">{computedCity() || "—"}</div>
             </div>
             <div className="actions">
               <button className="btn" onClick={()=>setSettingsOpen(true)}>⚙️ {t.settings}</button>
@@ -248,7 +265,7 @@ export default function ProfilePage(){
           </div>
         </div>
 
-        {/* Seller sekmeleri */}
+        {/* Üreten El sekmeleri */}
         {role==="seller" && (
           <div className="tabs">
             {["live","pending","expired"].map(k=>(
@@ -270,7 +287,7 @@ export default function ProfilePage(){
           </div>
         )}
 
-        {/* Legal */}
+        {/* Legal — en altta */}
         <div className="legal">
           <a href="/legal/gizlilik">{t.legal.privacy}</a>
           <a href="/legal/hakkimizda">{t.legal.about}</a>
@@ -283,12 +300,12 @@ export default function ProfilePage(){
 
         {/* Alt bar */}
         <footer className="bottombar">
-          <div className="mini"><button className="iconbtn" onClick={()=>router.push("/")}>🏠</button><span>{t.bottom.home}</span></div>
+          <div className="mini"><button className="iconbtn" onClick={()=>router.push("/home.html")}>🏠</button><span>{t.bottom.home}</span></div>
           <div className="mini"><button className="iconbtn" onClick={()=>router.push("/messages")}>💬</button><span>{t.bottom.messages}</span></div>
           <div className="mini"><button className="iconbtn" onClick={()=>router.push("/notifications")}>🔔</button><span>{t.bottom.noti}</span></div>
         </footer>
 
-        {/* Ayarlar Paneli */}
+        {/* Ayarlar Paneli (CITY input kaldırıldı — yalnızca İl/İlçe) */}
         {settingsOpen && (
           <div className="sheet" role="dialog" aria-modal="true">
             <div className="sheetCard">
@@ -302,7 +319,7 @@ export default function ProfilePage(){
                   <input value={form.fullName} onChange={e=>setForm({...form, fullName:e.target.value})}/>
                 </label>
                 <label className="lab">
-                  <span>{t.username}</span>
+                  <span>Kullanıcı adı</span>
                   <input value={form.username} onChange={e=>setForm({...form, username:e.target.value})}/>
                 </label>
                 <label className="lab">
@@ -313,19 +330,15 @@ export default function ProfilePage(){
                   <span>{t.ilce}</span>
                   <input value={form.ilce} onChange={e=>setForm({...form, ilce:e.target.value})}/>
                 </label>
-                <label className="lab">
-                  <span>{t.city}</span>
-                  <input value={form.city} onChange={e=>setForm({...form, city:e.target.value})} placeholder="İsterseniz il/ilçe birleşik"/>
-                </label>
 
                 <div className="sep"/>
                 <div className="lab"><strong>🔒 {t.changePwd}</strong></div>
                 <label className="lab">
-                  <span>Yeni şifre</span>
+                  <span>{t.pwdNew}</span>
                   <input type="password" value={form.newPwd} onChange={e=>setForm({...form, newPwd:e.target.value})} />
                 </label>
                 <label className="lab">
-                  <span>Yeni şifre (tekrar)</span>
+                  <span>{t.pwdNew2}</span>
                   <input type="password" value={form.newPwd2} onChange={e=>setForm({...form, newPwd2:e.target.value})} />
                 </label>
                 <a className="link" href="/user/profile/security" target="_blank" rel="noreferrer">➡️ {t.goSecurity}</a>
@@ -341,7 +354,7 @@ export default function ProfilePage(){
       </SignedIn>
 
       <style jsx>{`
-        .wrap{min-height:100vh; padding:16px 14px 88px; background:
+        .wrap{min-height:100vh; padding:16px 14px 96px; background:
           radial-gradient(1000px 700px at -10% -10%, rgba(255,255,255,.35), transparent 60%),
           linear-gradient(120deg,#ff80ab,#a78bfa,#60a5fa,#34d399);
           background-size:320% 320%; animation:drift 16s ease-in-out infinite;}
@@ -383,7 +396,7 @@ export default function ProfilePage(){
         .body{padding:10px}
         .title{margin:0 0 6px; font-size:14px; font-weight:800}
 
-        .legal{max-width:980px; margin:16px auto 90px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+        .legal{max-width:980px; margin:16px auto 96px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
         .legal a{border:1px solid #e5e7eb; background:#fff; color:#111827; border-radius:999px; padding:8px 12px; font-weight:700; text-decoration:none}
 
         .bottombar{position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; justify-content:space-around; gap:8px; padding:10px;
