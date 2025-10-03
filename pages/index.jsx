@@ -16,9 +16,8 @@
       background:
         radial-gradient(1200px 800px at -10% -10%, rgba(255,255,255,.35), transparent 60%),
         linear-gradient(120deg, var(--bg1),var(--bg2),var(--bg3),var(--bg4));
-      background-size:320% 320%; animation:drift 16s ease-in-out infinite; padding-bottom: env(safe-area-inset-bottom); /* fixed bottom bar safe area */
+      background-size:320% 320%; animation:drift 16s ease-in-out infinite; padding-bottom: env(safe-area-inset-bottom);
     }
-    /* Ensure page can grow and legal stays visible above bottom bar */
     body{min-height:100vh}
     @keyframes drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
@@ -43,6 +42,15 @@
     .hero h1{margin:8px 0 2px; font-size:30px; letter-spacing:.2px}
     .phrase{margin-top:10px; font-size:18px; color:#111827; animation:fade .6s ease}
     @keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+    .portalRow{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:12px}
+    .pbtnPrimary{
+      padding:12px 18px; border-radius:999px; border:none; cursor:pointer;
+      background:#111827; color:#fff; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,.15);
+    }
+    .pbtnGhost{
+      padding:12px 18px; border-radius:999px; cursor:pointer; font-weight:700;
+      background:var(--paper); border:1px solid var(--line); color:#111827; backdrop-filter: blur(8px);
+    }
 
     /* Categories */
     .catsWrap{max-width:1100px; margin:0 auto; padding:0 14px 14px}
@@ -129,6 +137,12 @@
     <img src="/assets/images/logo.png" alt="logo" />
     <h1 id="welcomeTitle">ÜRETEN ELLERE Hoş geldiniz!</h1>
     <div id="phraseBox" class="phrase">Amacımız: ev hanımlarına bütçe katkısı sağlamak.</div>
+
+    <!-- PORTAL SEÇİMİ → her zaman login'e gider -->
+    <div class="portalRow">
+      <button id="portalSeller" class="pbtnPrimary">Üreten El Portalı</button>
+      <button id="portalCustomer" class="pbtnGhost">Müşteri Portalı</button>
+    </div>
   </section>
 
   <section class="sec" id="showcaseWrap">
@@ -190,6 +204,8 @@
         more: "Devamı →",
         inspect: "İncele",
         viewWarn: "Detayları görmek için giriş yap ya da kaydol.",
+        sellerPortal: "Üreten El Portalı",
+        customerPortal: "Müşteri Portalı",
         welcomeTitle: (name)=> name ? `ÜRETEN ELLERE Hoş geldin, ${name}!` : "ÜRETEN ELLERE Hoş geldiniz!",
         welcomeSub: "Sade ve güvenli ana sayfa",
         support: { title:"Canlı Destek", hello:"Merhaba! Size nasıl yardımcı olabilirim?", sent:"Mesajınız alındı." },
@@ -215,6 +231,8 @@
         more: "More →",
         inspect: "View",
         viewWarn: "Please sign in or sign up to view details.",
+        sellerPortal: "Maker Portal",
+        customerPortal: "Customer Portal",
         welcomeTitle: (name)=> name ? `Welcome to Ureten Eller, ${name}!` : "Welcome to Ureten Eller!",
         welcomeSub: "Simple and secure homepage",
         support: { title:"Live Support", hello:"Hello! How can I help?", sent:"We received your message." },
@@ -240,6 +258,8 @@
         more: "المزيد →",
         inspect: "عرض",
         viewWarn: "لعرض التفاصيل، سجّل الدخول أو أنشئ حسابًا.",
+        sellerPortal: "بوابة المُنتِجات",
+        customerPortal: "بوابة العملاء",
         welcomeTitle: (name)=> name ? `مرحبًا بكم في أُنتِج بالأيادي، ${name}!` : "مرحبًا بكم في أُنتِج بالأيادي!",
         welcomeSub: "صفحة رئيسية بسيطة وآمنة",
         support: { title:"دعم مباشر", hello:"أهلًا! كيف أساعدك؟", sent:"تم استلام رسالتك." },
@@ -265,6 +285,8 @@
         more: "Mehr →",
         inspect: "Ansehen",
         viewWarn: "Zum Anzeigen bitte anmelden oder registrieren.",
+        sellerPortal: "Portal für Anbieterinnen",
+        customerPortal: "Kundenportal",
         welcomeTitle: (name)=> name ? `Willkommen bei Ureten Eller, ${name}!` : "Willkommen bei Ureten Eller!",
         welcomeSub: "Einfache & sichere Startseite",
         support: { title:"Live-Support", hello:"Hallo! Wie kann ich helfen?", sent:"Nachricht erhalten." },
@@ -319,7 +341,7 @@
         { t:"Cakes & Sweets", icon:"🎂", s:["Layer cake","Cookies","Milk desserts"] },
         { t:"Jam • Pickle • Sauce", icon:"🍯", s:["Jam","Pickles","Tomato/pepper"] },
         { t:"Regional / Winter Prep", icon:"🧺", s:["Noodles","Tarhana","Manti"] },
-        { t:"Diet / Vegan / GF", icon:"🥗", s:["Fit bowls","Vegan","Gluten‑free"] },
+        { t:"Diet / Vegan / GF", icon:"🥗", s:["Fit bowls","Vegan","Gluten-free"] },
         { t:"Jewelry", icon:"💍", s:["Bracelet","Necklace","Earrings"] },
         { t:"Baby & Kids", icon:"🧸", s:["Rattle","Booties","Blanket"] },
         { t:"Knitwear", icon:"🧵", s:["Cardigan","Scarf","Shawl"] },
@@ -351,7 +373,7 @@
         { t:"Torten & Süßes", icon:"🎂", s:["Torte","Kekse","Milchdesserts"] },
         { t:"Marmelade • Pickles • Soßen", icon:"🍯", s:["Marmelade","Eingelegtes","Tomaten/Pfeffer"] },
         { t:"Regional / Wintervorrat", icon:"🧺", s:["Nudeln","Tarhana","Manti"] },
-        { t:"Diät / Vegan / GF", icon:"🥗", s:["Fit Bowls","Vegan","Glutenfrei"] },
+        { t:"Diät / Vegan / Glutenfrei", icon:"🥗", s:["Fit Bowls","Vegan","Glutenfrei"] },
         { t:"Schmuck", icon:"💍", s:["Armband","Kette","Ohrringe"] },
         { t:"Baby & Kinder", icon:"🧸", s:["Rassel","Schühchen","Decke"] },
         { t:"Strickwaren", icon:"🧵", s:["Cardigan","Schal","Tuch"] },
@@ -394,7 +416,10 @@
       const lh = qs('#latestHead'); if(lh) lh.textContent = pack.latest20;
 
       const wt = qs('#welcomeTitle'); if(wt) wt.textContent = pack.welcomeTitle(state.name);
-      const ws = qs('#welcomeSub'); if(ws) ws.textContent = pack.welcomeSub; // optional (element removed)
+      const st = qs('#supTitle'); if(st) st.textContent = pack.support.title;
+
+      const ps = qs('#portalSeller'); if(ps) ps.textContent = pack.sellerPortal;
+      const pc = qs('#portalCustomer'); if(pc) pc.textContent = pack.customerPortal;
 
       // Legal links
       const L = pack.legal; const cont = qs('#legalLinks'); if(cont){
@@ -432,6 +457,11 @@
       phraseIndex++;
       clearTimeout(phraseTimer);
       phraseTimer = setTimeout(setPhrase, 3500);
+    }
+
+    // Portal login (always go to login even if already signed in)
+    function goPortal(role){
+      window.location.href = '/login?role=' + encodeURIComponent(role) + '&force=1';
     }
 
     // Render Categories
@@ -484,7 +514,7 @@
       items.forEach(a=>{
         const el = document.createElement('div');
         el.className='adCard';
-        const href = a.url || ('/ad/' + (a.id||''));
+        const href = a.url || ('/ad/' + (a.id||'')); // gerçek detay sayfası
         const bg = a.img ? `background-image:url('${a.img}'); background-size:cover; background-position:center;` : '';
         el.innerHTML = `<div class="adThumb" style="${bg}"></div>
           <div class="adBody">
@@ -495,7 +525,7 @@
             </div>
           </div>`;
         const btn = el.querySelector('.inspectBtn');
-        if(btn){ btn.onclick = ()=>{ alert(pack.viewWarn); window.location.href = '/login?role=customer&redirect=' + encodeURIComponent(href); }; }
+        if(btn){ btn.onclick = ()=>{ alert(pack.viewWarn); window.location.href = '/login?role=customer&force=1&redirect=' + encodeURIComponent(href); }; }
         grid.appendChild(el);
       });
     }
@@ -529,10 +559,16 @@
       const pl = qs('#postListing'); if(pl) pl.onclick = postListing;
       const mb = qs('#msgBtnB'); if(mb) mb.onclick = ()=>{ window.location.href = '/messages'; };
       const nb = qs('#notiBtnB'); if(nb) nb.onclick = ()=>{ window.location.href = '/notifications'; };
+
       if(state.role !== 'seller' && pl){ pl.classList.add('hide'); }
+
       const sBtn = qs('#supportBtn'); const sClose = qs('#supClose'); const sSend = qs('#supSend'); const sInput = qs('#supInput');
-      if(sBtn) sBtn.onclick = supOpen; if(sClose) sClose.onclick = supClose; if(sSend) sSend.onclick = ()=>{ const v=sInput? sInput.value.trim():''; if(!v) return; addMe(v); if(sInput) sInput.value=''; setTimeout(()=> addBot(STR[state.lang].support.sent), 600); };
+      if(sBtn) sBtn.onclick = supOpen; if(sClose) sClose.onclick = supClose;
+      if(sSend) sSend.onclick = ()=>{ const v=sInput? sInput.value.trim():''; if(!v) return; addMe(v); if(sInput) sInput.value=''; setTimeout(()=> addBot(STR[state.lang].support.sent), 600); };
       if(sInput) sInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); const v=sInput.value.trim(); if(!v) return; addMe(v); sInput.value=''; setTimeout(()=> addBot(STR[state.lang].support.sent), 600); } });
+
+      const ps = qs('#portalSeller'); if(ps) ps.onclick = ()=>goPortal('seller');
+      const pc = qs('#portalCustomer'); if(pc) pc.onclick = ()=>goPortal('customer');
     }
 
     // Adjust bottom safe area based on actual footer height
@@ -548,10 +584,11 @@
       console.assert(!!qs('#welcomeTitle'), '#welcomeTitle exists');
       console.assert((qs('#catsGrid')||{}).children?.length > 0, 'category cards rendered');
       console.assert((qs('#legalLinks')||{}).children?.length > 0, 'legal links rendered');
-      console.assert(qs('#postListing')? true : true, 'postListing button present');
+      console.assert(qs('#portalSeller') && qs('#portalCustomer'), 'portal buttons present');
       console.groupEnd();
     }
 
+    // API shim to avoid 404 on /api/ads/public
     (function shimAdsAPI(){
       const orig = window.fetch ? window.fetch.bind(window) : null;
       if(!orig) return;
