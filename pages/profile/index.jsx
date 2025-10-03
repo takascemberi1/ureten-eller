@@ -94,7 +94,7 @@ export default function ProfilePage(){
   useEffect(()=>{
     if(!userLoaded || !user || !firstLoad.current) return;
 
-    const meta = (user.unsafeMetadata||(user.unsafeMetadata||user.publicMetadata))||{};
+    const meta = (user.unsafeMetadata||user.publicMetadata)||{};
     const savedFull = localStorage.getItem("full_name");
     const savedIl = localStorage.getItem("il") || "";
     const savedIlce = localStorage.getItem("ilce") || "";
@@ -189,7 +189,7 @@ export default function ProfilePage(){
         firstName: firstName || undefined,
         lastName: lastName || undefined,
         unsafeMetadata:{
-          ...((user.unsafeMetadata||(user.unsafeMetadata||user.publicMetadata))||{}),
+          ...((user.unsafeMetadata||user.publicMetadata)||{}),
           full_name: form.fullName,
           il: form.il || "",
           ilce: form.ilce || "",
