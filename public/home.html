@@ -506,7 +506,7 @@
     function bind(){
       const sel = qs('#langSel'); if(sel){ sel.value = state.lang; sel.addEventListener('change', (e)=>{ state.lang = e.target.value; localStorage.setItem('lang', state.lang); applyDir(); i18nPaint(); }); }
       const hbB = qs('#homeBtnB'); if(hbB) hbB.onclick = goHome;
-      const prof = qs('#profileBtn'); if(prof) prof.onclick = ()=>{ window.location.href = (state.role==='seller')? '/portal/seller' : '/portal/customer'; };
+      const prof = qs('#profileBtn'); if(prof) prof.onclick = ()=>{ window.location.href = '/profile'; };
       const lo = qs('#logoutBtn'); if(lo) lo.onclick = logout;
       const pl = qs('#postListing'); if(pl) pl.onclick = postListing;
       const mb = qs('#msgBtnB'); if(mb) mb.onclick = ()=>{ window.location.href = '/messages'; };
