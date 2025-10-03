@@ -67,7 +67,7 @@ function useLang(){
   const t = useMemo(()=>STR[lang]||STR.tr,[lang]); return {lang,setLang,t};
 }
 
-const HOME_PATH = "/";
+const HOME_PATH = "/home.html";
 
 /* ---- Page ---- */
 export default function LoginRegister(){
