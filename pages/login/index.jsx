@@ -67,6 +67,7 @@ function useLang(){
   const t = useMemo(()=>STR[lang]||STR.tr,[lang]); return {lang,setLang,t};
 }
 
+/* ---- IMPORTANT: Giriş sonrası hedef ---- */
 const HOME_PATH = "/home.html";
 
 /* ---- Page ---- */
@@ -78,6 +79,9 @@ export default function LoginRegister(){
   const { query, push } = useRouter();
 
   const role = (query.role==="seller"||query.role==="customer")?query.role:"customer";
+  const force = query?.force === "1" || query?.force === "true";
+  const redirectTarget = (typeof query?.redirect === "string" && query.redirect) ? query.redirect : HOME_PATH;
+
   const [mode,setMode]=useState("signin");            // signin | signup
   const [step,setStep]=useState("form");              // form | verify-email
 
@@ -99,7 +103,13 @@ export default function LoginRegister(){
   const [err,setErr]=useState("");
   const [loading,setLoading]=useState(false);
 
-  useEffect(()=>{ if(isSignedIn) push(HOME_PATH); },[isSignedIn,push]);
+  // Seçilen rolü UI'nin diğer taraflarında kullanabilelim
+  useEffect(()=>{ try{ localStorage.setItem("role", role); }catch{} },[role]);
+
+  // Oturum açıkken, sadece "force" yoksa otomatik yönlendir.
+  useEffect(()=>{
+    if(isSignedIn && !force){ push(redirectTarget); }
+  },[isSignedIn, force, redirectTarget, push]);
 
   const strongPw = (pw)=>/^(?=.*[A-Z]).{8,}$/.test(pw);
 
@@ -110,7 +120,7 @@ export default function LoginRegister(){
     setErr(""); setLoading(true);
     try{
       const res = await signIn.create({ identifier: email, password });
-      if(res.status==="complete"){ await push(HOME_PATH); }
+      if(res.status==="complete"){ await push(redirectTarget); }
       else { setErr(t.badcreds); }
     }catch(e){ setErr(t.badcreds); }
     finally{ setLoading(false); }
@@ -151,7 +161,11 @@ export default function LoginRegister(){
     setErr(""); setLoading(true);
     try{
       const r = await signUp.attemptEmailAddressVerification({ code });
-      if(r.status==="complete"){ await setActive({ session: r.createdSessionId }); push(HOME_PATH); }
+      if(r.status==="complete"){
+        try{ localStorage.setItem("full_name", fullName); }catch{}
+        await setActive({ session: r.createdSessionId });
+        push(redirectTarget);
+      }
     }catch(e){ setErr(e?.errors?.[0]?.message || String(e)); }
     finally{ setLoading(false); }
   }
