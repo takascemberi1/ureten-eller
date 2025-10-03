@@ -1,466 +1,371 @@
-// PREVIEW-SAFE PROFILE PAGE (Canvas)
-// This top section runs in Canvas without external deps. Below, you'll find the real Next.js files
-// wrapped in a big comment block (so Canvas doesn't try to execute server code).
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
+import { SignedIn, SignedOut, useAuth, useUser } from "@clerk/nextjs";
 
-// ---------------- Preview Imports & Stubs ----------------
-// No Clerk here; we simulate a signed-in user and an in-memory ads store.
-
+/** Basit i18n */
 const STR = {
   tr: {
     title: "Profil",
-    sub: "Bilgilerini güncelle, fotoğrafını değiştir ve ilanlarını yönet.",
-    logout: "Çıkış",
-    backHome: "Ana Sayfa",
-    infoCard: "Profil Bilgileri",
-    name: "Ad Soyad",
-    username: "Kullanıcı adı",
-    city: "Şehir",
-    language: "Dil",
-    role: "Rol",
-    save: "Kaydet",
-    saved: "Kaydedildi.",
-    avatarCard: "Profil Fotoğrafı",
-    choose: "Dosya seç",
+    sellerBadge: "Üreten El",
+    customerBadge: "Müşteri",
+    editAvatar: "Profil resmini değiştir",
     upload: "Yükle",
+    name: "Ad Soyad",
+    email: "E-posta",
+    city: "Şehir",
+    save: "Kaydet",
+    profileTab: "Profil",
+    listingsTab: "İlanlar",
+    live: "Yayındaki İlanlar",
+    pending: "Onay Bekleyen İlanlar",
+    expired: "Süresi Dolan İlanlar",
+    empty: "Henüz içerik yok.",
+    rate: "Yıldız ver",
+    message: "Mesaj Gönder",
+    logout: "Çıkış",
     uploading: "Yükleniyor…",
-    listings: "İlanlarım",
-    live: "Yayındaki",
-    pending: "Onay bekleyen",
-    expired: "Süresi dolan",
-    noItems: "Kayıt yok",
-    view: "Görüntüle",
-    edit: "Düzenle",
-    remove: "Sil",
-    pause: "Durdur",
-    extend: "Süreyi 30 gün uzat",
-    createFirst: "İlk ilanını oluştur",
-    newAd: "Yeni İlan",
   },
   en: {
     title: "Profile",
-    sub: "Update your info, change avatar and manage your listings.",
-    logout: "Sign out",
-    backHome: "Home",
-    infoCard: "Profile Info",
-    name: "Full name",
-    username: "Username",
-    city: "City",
-    language: "Language",
-    role: "Role",
-    save: "Save",
-    saved: "Saved.",
-    avatarCard: "Profile Photo",
-    choose: "Choose file",
+    sellerBadge: "Maker",
+    customerBadge: "Customer",
+    editAvatar: "Change avatar",
     upload: "Upload",
+    name: "Full Name",
+    email: "Email",
+    city: "City",
+    save: "Save",
+    profileTab: "Profile",
+    listingsTab: "Listings",
+    live: "Live Listings",
+    pending: "Pending Approval",
+    expired: "Expired Listings",
+    empty: "Nothing yet.",
+    rate: "Rate",
+    message: "Send Message",
+    logout: "Logout",
     uploading: "Uploading…",
-    listings: "My Listings",
-    live: "Live",
-    pending: "Pending",
-    expired: "Expired",
-    noItems: "No records",
-    view: "View",
-    edit: "Edit",
-    remove: "Delete",
-    pause: "Pause",
-    extend: "Extend 30 days",
-    createFirst: "Create your first listing",
-    newAd: "New Listing",
   },
   ar: {
     title: "الملف الشخصي",
-    sub: "حدّث بياناتك وغيّر الصورة وأدر الإعلانات.",
-    logout: "تسجيل الخروج",
-    backHome: "الرئيسية",
-    infoCard: "بيانات الملف",
-    name: "الاسم الكامل",
-    username: "اسم المستخدم",
-    city: "المدينة",
-    language: "اللغة",
-    role: "الدور",
-    save: "حفظ",
-    saved: "تم الحفظ.",
-    avatarCard: "صورة الملف",
-    choose: "اختر ملفًا",
+    sellerBadge: "منتِجة",
+    customerBadge: "عميل",
+    editAvatar: "تغيير الصورة",
     upload: "رفع",
-    uploading: "جاري الرفع…",
-    listings: "إعلاناتي",
-    live: "منشور",
+    name: "الاسم الكامل",
+    email: "البريد",
+    city: "المدينة",
+    save: "حفظ",
+    profileTab: "الملف",
+    listingsTab: "الإعلانات",
+    live: "إعلانات نشطة",
     pending: "بانتظار الموافقة",
-    expired: "منتهٍ",
-    noItems: "لا يوجد سجلات",
-    view: "عرض",
-    edit: "تعديل",
-    remove: "حذف",
-    pause: "إيقاف",
-    extend: "تمديد 30 يومًا",
-    createFirst: "أنشئ أول إعلان لك",
-    newAd: "إعلان جديد",
+    expired: "منتهية الصلاحية",
+    empty: "لا شيء بعد.",
+    rate: "قيّم",
+    message: "أرسل رسالة",
+    logout: "خروج",
+    uploading: "جاري الرفع…",
   },
   de: {
     title: "Profil",
-    sub: "Infos aktualisieren, Avatar ändern und Anzeigen verwalten.",
-    logout: "Abmelden",
-    backHome: "Start",
-    infoCard: "Profilinformationen",
-    name: "Vollständiger Name",
-    username: "Benutzername",
-    city: "Stadt",
-    language: "Sprache",
-    role: "Rolle",
-    save: "Speichern",
-    saved: "Gespeichert.",
-    avatarCard: "Profilbild",
-    choose: "Datei wählen",
+    sellerBadge: "Anbieterin",
+    customerBadge: "Kund:in",
+    editAvatar: "Avatar ändern",
     upload: "Hochladen",
+    name: "Vollständiger Name",
+    email: "E-Mail",
+    city: "Stadt",
+    save: "Speichern",
+    profileTab: "Profil",
+    listingsTab: "Inserate",
+    live: "Aktive Inserate",
+    pending: "Wartet auf Freigabe",
+    expired: "Abgelaufene Inserate",
+    empty: "Noch nichts da.",
+    rate: "Bewerten",
+    message: "Nachricht senden",
+    logout: "Abmelden",
     uploading: "Wird hochgeladen…",
-    listings: "Meine Inserate",
-    live: "Live",
-    pending: "Ausstehend",
-    expired: "Abgelaufen",
-    noItems: "Keine Einträge",
-    view: "Ansehen",
-    edit: "Bearb.",
-    remove: "Löschen",
-    pause: "Pausieren",
-    extend: "30 Tage verlängern",
-    createFirst: "Erstelle deine erste Anzeige",
-    newAd: "Neue Anzeige",
   },
 };
 
-const SUPPORTED = ["tr","en","ar","de"];
-
-function usePreviewLang(){
-  const React = require("react");
-  const { useEffect, useMemo, useState } = React;
-  const [lang,setLang] = useState(() => localStorage.getItem("lang") || "tr");
-  useEffect(()=>{ localStorage.setItem("lang", lang); document.documentElement.lang = lang; document.documentElement.dir = (lang==='ar')?'rtl':'ltr'; }, [lang]);
-  const t = useMemo(()=> STR[lang] || STR.tr, [lang]);
-  return { lang, setLang, t };
-}
-
-function fmtDate(d){ try{ const x = new Date(d); return x.toLocaleDateString(); }catch{ return ""; } }
-
-function makeId(){ return Math.random().toString(36).slice(2,10); }
-function inDays(days){ return new Date(Date.now()+days*864e5).toISOString(); }
-
-function useDemoStore(){
-  const React = require("react");
-  const { useEffect, useState } = React;
-  const [items,setItems] = useState(()=>{
-    try{ return JSON.parse(localStorage.getItem("demo_ads")||"[]"); }catch{ return []; }
-  });
-  useEffect(()=>{ localStorage.setItem("demo_ads", JSON.stringify(items)); }, [items]);
-  function create(){
-    const ad = { id: makeId(), title:"İlan Başlığı", cat:"Genel", status:"pending", createdAt: new Date().toISOString(), expiresAt: inDays(30) };
-    setItems(x=> [ad, ...x]);
-  }
-  function patch({id, action}){
-    setItems(list => list.map(x => {
-      if(x.id!==id) return x;
-      if(action==='extend') return { ...x, status:'live', expiresAt: inDays(30) };
-      if(action==='pause') return { ...x, status:'pending' };
-      return x;
-    }));
-  }
-  function remove(id){ setItems(list=> list.filter(x=>x.id!==id)); }
-  return { items, setItems, create, patch, remove };
-}
-
-export default function ProfilePreview(){
-  const React = require("react");
-  const { useRef, useState } = React;
-  const { lang, setLang, t:pack } = usePreviewLang();
-  const { items, create, patch, remove } = useDemoStore();
-
-  // fake user
-  const [fullName,setFullName] = useState("");
-  const [username,setUsername] = useState("");
-  const [city,setCity] = useState("");
-  const [role,setRole] = useState("customer");
-  const [saving,setSaving] = useState(false);
-  const [savedMsg,setSavedMsg] = useState("");
-
-  const [preview,setPreview] = useState("");
-  const [file,setFile] = useState(null);
-  const [upLoading,setUpLoading] = useState(false);
-  const fileRef = useRef(null);
-
-  const live = items.filter(x => x.status === "live" && (!x.expiresAt || Date.now() < new Date(x.expiresAt).getTime()));
-  const pending = items.filter(x => x.status === "pending");
-  const expired = items.filter(x => x.status === "expired" || (x.expiresAt && Date.now() >= new Date(x.expiresAt).getTime()));
-
-  function onSave(e){ e.preventDefault(); setSaving(true); setTimeout(()=>{ setSaving(false); setSavedMsg(pack.saved); }, 400); }
-  function onFileChange(e){ const f=e.target.files?.[0]; if(!f) return; setFile(f); const r=new FileReader(); r.onload=()=>setPreview(r.result); r.readAsDataURL(f); }
-  function onUpload(){ if(!file) return; setUpLoading(true); setTimeout(()=>{ setUpLoading(false); alert("Demo: Avatar güncellendi (önizleme)"); }, 600); }
-
-  return (
-    <main className="wrap">
-      <div className="top">
-        <div className="brand">
-          <img src="/assets/images/logo.png" alt="logo" width="36" height="36" />
-          <div>
-            <h1>{pack.title}</h1>
-            <p className="sub">{pack.sub}</p>
-          </div>
-        </div>
-        <div className="right">
-          <select value={lang} onChange={e=>setLang(e.target.value)}>
-            {SUPPORTED.map(k=> <option key={k} value={k}>{k.toUpperCase()}</option>)}
-          </select>
-          <a className="btn ghost" href="/">{pack.backHome}</a>
-          <a className="btn dark" href="/sign-out">{pack.logout}</a>
-        </div>
-      </div>
-
-      <section className="grid">
-        {/* Avatar */}
-        <article className="card glass">
-          <h3>{pack.avatarCard}</h3>
-          <div className="avatarRow">
-            <img className="avatar" src={preview || "/assets/images/logo.png"} alt="avatar" />
-            <div className="col">
-              <input ref={fileRef} type="file" accept="image/*" onChange={onFileChange} />
-              <div className="row">
-                <button className="btn" onClick={()=>fileRef.current?.click()}>{pack.choose}</button>
-                <button className="btn dark" onClick={onUpload} disabled={!file || upLoading}>{upLoading?pack.uploading:pack.upload}</button>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        {/* Info */}
-        <article className="card glass">
-          <h3>{pack.infoCard}</h3>
-          <form onSubmit={onSave} className="form">
-            <label>
-              <span>{pack.name}</span>
-              <input value={fullName} onChange={e=>setFullName(e.target.value)} />
-            </label>
-            <div className="two">
-              <label>
-                <span>{pack.username}</span>
-                <input value={username} onChange={e=>setUsername(e.target.value)} />
-              </label>
-              <label>
-                <span>{pack.city}</span>
-                <input value={city} onChange={e=>setCity(e.target.value)} />
-              </label>
-            </div>
-            <div className="two">
-              <label>
-                <span>{pack.language}</span>
-                <select value={lang} onChange={e=>setLang(e.target.value)}>
-                  {SUPPORTED.map(k=> <option key={k} value={k}>{k.toUpperCase()}</option>)}
-                </select>
-              </label>
-              <label>
-                <span>{pack.role}</span>
-                <input value={role} onChange={e=>setRole(e.target.value)} />
-              </label>
-            </div>
-            <div className="row">
-              <button className="btn dark" disabled={saving}>{saving?"…":pack.save}</button>
-              {savedMsg && <small className="ok">{savedMsg}</small>}
-            </div>
-          </form>
-        </article>
-      </section>
-
-      {/* Listings */}
-      <section className="card listCard">
-        <header className="listHead">
-          <h3>{pack.listings}</h3>
-          <div className="tabs">
-            <a className="btn dark" onClick={(e)=>{e.preventDefault(); create();}}>{pack.newAd}</a>
-          </div>
-        </header>
-
-        <div className="items">
-          {items.map(ad => (
-            <div key={ad.id} className="item">
-              <div className="meta">
-                <strong className="ttl">{ad.title}</strong>
-                <small className="muted">{ad.cat} • {fmtDate(ad.createdAt)}{ad.expiresAt?` • exp ${fmtDate(ad.expiresAt)}`:''}</small>
-              </div>
-              <div className="acts">
-                {ad.status==='live' && <a className="btn" href={`#`}>{pack.view}</a>}
-                {ad.status==='pending' && <a className="btn" href={`#`}>{pack.edit}</a>}
-                {ad.status==='pending' && <button className="btn" onClick={()=>remove(ad.id)}>{pack.remove}</button>}
-                {ad.status==='live' && <button className="btn" onClick={()=>patch({id:ad.id, action:'pause'})}>{pack.pause}</button>}
-                {ad.status!=='live' && <button className="btn dark" onClick={()=>patch({id:ad.id, action:'extend'})}>{pack.extend}</button>}
-              </div>
-            </div>
-          ))}
-          {items.length===0 && (
-            <div className="empty">{pack.noItems} — <a href="#" onClick={(e)=>{e.preventDefault(); create();}}>{pack.createFirst}</a></div>
-          )}
-        </div>
-      </section>
-
-      <style jsx>{`
-        :root{ --ink:#0f172a; --muted:#475569; --paper:rgba(255,255,255,.86); --line:rgba(255,255,255,.45); --brand:#111827; }
-        body{ background: radial-gradient(1200px 800px at -10% -10%, rgba(255,255,255,.35), transparent 60%), linear-gradient(120deg,#ff80ab,#a78bfa,#60a5fa,#34d399); background-size:320% 320%; animation:drift 16s ease-in-out infinite; }
-        @keyframes drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-        .wrap{max-width:1100px;margin:0 auto;padding:20px}
-        .top{display:flex;align-items:center;gap:12px}
-        .brand{display:flex;align-items:center;gap:10px}
-        .brand h1{margin:0;font-size:22px}
-        .sub{margin:2px 0 0;color:var(--muted)}
-        .right{margin-left:auto;display:flex;gap:8px;align-items:center}
-        .btn{border:1px solid #e5e7eb;background:#fff;color:#111827;border-radius:12px;padding:8px 12px;font-weight:700;cursor:pointer;text-decoration:none}
-        .btn.dark{background:#111827;color:#fff;border-color:#111827}
-        .btn.ghost{background:#fff}
-        .grid{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:12px}
-        @media (max-width:900px){ .grid{grid-template-columns:1fr} }
-        .card{background:var(--paper);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 16px 36px rgba(0,0,0,.10)}
-        .glass{position:relative;overflow:hidden}
-        .glass:before{content:"";position:absolute;inset:-40%;filter:blur(60px);opacity:.6;background:radial-gradient(circle at 30% 30%, #ff80ab, transparent 60%),radial-gradient(circle at 70% 60%, #60a5fa, transparent 60%)}
-        .glass > *{position:relative}
-        h3{margin:0 0 10px;font-size:16px}
-        .avatarRow{display:flex;align-items:center;gap:14px}
-        .avatar{width:88px;height:88px;border-radius:999px;border:3px solid #fff;box-shadow:0 10px 24px rgba(0,0,0,.18);object-fit:cover}
-        .row{display:flex;gap:8px}
-        .col{display:grid;gap:8px}
-        .form{display:grid;gap:8px}
-        .form label{display:grid;gap:6px}
-        .form input, .form select{padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px}
-        .two{display:grid;gap:8px;grid-template-columns:1fr 1fr}
-        @media (max-width:720px){ .two{grid-template-columns:1fr} }
-        .ok{color:#059669;margin-left:6px}
-
-        .listCard{margin-top:12px}
-        .listHead{display:flex;align-items:center;justify-content:space-between}
-        .tabs{display:flex;gap:8px;align-items:center}
-        .items{display:grid;gap:8px;margin-top:10px}
-        .item{display:flex;align-items:center;justify-content:space-between;border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:10px}
-        .ttl{display:block}
-        .muted{color:#64748b}
-        .acts{display:flex;gap:8px}
-        .empty{padding:14px;text-align:center;color:#475569}
-      `}</style>
-    </main>
-  );
-}
-
-/*
-=========================== COPY THESE INTO YOUR NEXT.JS REPO ===========================
-
-1) FILE: pages/profile/index.jsx
-----------------------------------------------------------------------------------------
-"use client";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/router";
-import { useAuth, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
-
-const SUPPORTED = ["tr","en","ar","de"];
-const STR = /* same as in preview (copy from above) */ {};
-
-function useLang() {
-  const [lang, setLang] = useState("tr");
-  useEffect(() => { const s = localStorage.getItem("lang"); if (s && SUPPORTED.includes(s)) setLang(s); }, []);
-  useEffect(() => { localStorage.setItem("lang", lang); try { document.documentElement.lang = lang; document.documentElement.dir = (lang==='ar')?'rtl':'ltr'; } catch {} }, [lang]);
-  const t = useMemo(() => STR[lang] || STR.tr, [lang]);
-  return { lang, setLang, t };
+function useLangPick() {
+  const lang =
+    (typeof window !== "undefined" && localStorage.getItem("lang")) ||
+    (typeof document !== "undefined" && document.documentElement.lang) ||
+    "tr";
+  return STR[lang] || STR.tr;
 }
 
 export default function ProfilePage() {
-  const { lang, setLang, t } = useLang();
+  const t = useLangPick();
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
-  const { user, isLoaded: userLoaded } = useUser();
+  const { user } = useUser();
 
-  const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
-  const [city, setCity] = useState("");
-  const [role, setRole] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [savedMsg, setSavedMsg] = useState("");
+  // Sekme: "profil" / "ilanlar" (ilanlar yalnızca seller için görünür)
+  const [tab, setTab] = useState("profil");
 
-  const [preview, setPreview] = useState("");
-  const [file, setFile] = useState(null);
-  const [upLoading, setUpLoading] = useState(false);
-  const fileRef = useRef(null);
+  // Avatar yükleme durumu
+  const [busy, setBusy] = useState(false);
 
-  const [items, setItems] = useState([]);
-  const [tab, setTab] = useState("live");
-  const [busyId, setBusyId] = useState(null);
-
-  useEffect(() => { if (!isLoaded) return; if (!isSignedIn) router.replace("/login?role=customer"); }, [isLoaded, isSignedIn, router]);
+  // Giriş şartı: değilse login'e yolla (role ipucu için localStorage kullan)
   useEffect(() => {
-    if (!userLoaded || !user) return;
-    const fn = [user.firstName || "", user.lastName || ""].filter(Boolean).join(" ");
-    setFullName(fn);
-    setUsername(user.username || "");
-    setCity((user.publicMetadata?.city || "") + "");
-    setRole((user.publicMetadata?.role || "customer") + "");
-  }, [userLoaded, user]);
-  useEffect(() => { (async()=>{ try{ const r=await fetch("/api/ads/my"); const j=await r.json(); setItems(Array.isArray(j?.items)?j.items:[]); }catch(e){ console.error(e);} })(); }, []);
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      const role =
+        (typeof window !== "undefined" && localStorage.getItem("role")) ||
+        "customer";
+      router.replace(`/login?role=${role}&redirect=/profile`);
+    }
+  }, [isLoaded, isSignedIn, router]);
 
-  async function onSave(e){ e?.preventDefault(); if(!user) return; setSaving(true); setSavedMsg("");
-    try{ const [firstName,...rest]=fullName.trim().split(" "); const lastName=rest.join(" "); await user.update({ firstName, lastName, username }); await user.update({ publicMetadata: { ...(user.publicMetadata||{}), city, lang, role } }); setSavedMsg(t.saved); } catch(e){ alert(String(e?.errors?.[0]?.message || e)); } finally{ setSaving(false); }
+  // Kullanıcı rolü (Clerk publicMetadata veya localStorage)
+  const role = useMemo(() => {
+    const metaRole = user?.publicMetadata?.role;
+    if (metaRole === "seller" || metaRole === "customer") return metaRole;
+    if (typeof window !== "undefined") {
+      const r = localStorage.getItem("role");
+      if (r === "seller" || r === "customer") return r;
+    }
+    return "customer";
+  }, [user]);
+
+  // Basit ilan veri kaynağı (API beklemeden boş-doluluk göstermek için localStorage)
+  const myAds = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("my_ads");
+      const arr = raw ? JSON.parse(raw) : [];
+      const live = arr.filter((x) => x.status === "live");
+      const pending = arr.filter((x) => x.status === "pending");
+      const expired = arr.filter((x) => x.status === "expired");
+      return { live, pending, expired };
+    } catch {
+      return { live: [], pending: [], expired: [] };
+    }
+  }, []);
+
+  async function onAvatarChange(e) {
+    const file = e.target?.files?.[0];
+    if (!file || !user) return;
+    try {
+      setBusy(true);
+      // Clerk: profil foto yükleme (resmi Clerk'e gönderir)
+      await user.setProfileImage({ file });
+      await user.reload?.();
+    } catch (err) {
+      alert(err?.errors?.[0]?.message || String(err));
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function onFileChange(e){ const f=e.target.files?.[0]; if(!f) return; setFile(f); const reader=new FileReader(); reader.onload=()=>setPreview(reader.result); reader.readAsDataURL(f); }
-  async function onUploadAvatar(){ if(!file) return; try{ setUpLoading(true); const dataUrl=preview; const mime=file.type||"image/jpeg"; const r=await fetch("/api/profile/avatar", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ data: dataUrl, mime })}); const j=await r.json(); if(!r.ok) throw new Error(j?.error||"Upload failed"); window.location.reload(); } catch(e){ alert(String(e)); } finally{ setUpLoading(false); } }
+  function CustomerView() {
+    const fullName =
+      user?.publicMetadata?.full_name || user?.fullName || user?.firstName || "";
+    const city = user?.publicMetadata?.city || "";
+    const email = user?.primaryEmailAddress?.emailAddress || "";
+    const [rating, setRating] = useState(
+      Number(localStorage.getItem("my_rating") || 0)
+    );
 
-  const live = items.filter(x => x.status === "live" && (!x.expiresAt || Date.now() < new Date(x.expiresAt).getTime()));
-  const pending = items.filter(x => x.status === "pending");
-  const expired = items.filter(x => x.status === "expired" || (x.expiresAt && Date.now() >= new Date(x.expiresAt).getTime()));
+    function sendMessage() {
+      // gerçek mesaj sayfasına yönlendirme: alıcı = kullanıcı id
+      router.push(`/messages?to=${encodeURIComponent(user?.id || "")}`);
+    }
+    function saveRating(v) {
+      setRating(v);
+      localStorage.setItem("my_rating", String(v));
+      alert("Teşekkürler! ⭐");
+    }
 
-  async function extend30(id){ setBusyId(id); try{ const r=await fetch("/api/ads/my", { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"extend", id, days:30 })}); const j=await r.json(); setItems(j.items||[]);} catch(e){ alert(String(e)); } finally{ setBusyId(null); } }
+    return (
+      <div className="card">
+        <h3>{t.profileTab}</h3>
+        <div className="grid">
+          <div className="field">
+            <label>{t.name}</label>
+            <div className="val">{fullName || "-"}</div>
+          </div>
+          <div className="field">
+            <label>{t.email}</label>
+            <div className="val">{email || "-"}</div>
+          </div>
+          <div className="field">
+            <label>{t.city}</label>
+            <div className="val">{city || "-"}</div>
+          </div>
+        </div>
 
-  return (/* JSX SAME AS PREVIEW, with SignedIn/SignedOut and tabs for live/pending/expired incl. extend/pause/remove */);
-}
-
-// helper functions removeAd, pauseAd, fmtDate... (same as preview / earlier)
-
-2) FILE: pages/api/profile/avatar.js
-----------------------------------------------------------------------------------------
-import { getAuth } from "@clerk/nextjs/server";
-export const config = { api: { bodyParser: { sizeLimit: '6mb' } } };
-export default async function handler(req, res){
-  if(req.method !== 'POST') return res.status(405).end();
-  const { userId } = getAuth(req);
-  if(!userId) return res.status(401).json({ error: 'unauthorized' });
-  try{
-    const { data, mime } = req.body || {};
-    if(!data) return res.status(400).json({ error: 'no data' });
-    const base64 = String(data).split(',').pop();
-    const buf = Buffer.from(base64, 'base64');
-    const form = new FormData();
-    const file = new Blob([buf], { type: mime || 'image/jpeg' });
-    form.append('file', file, 'avatar.jpg');
-    const r = await fetch(`https://api.clerk.com/v1/users/${userId}/profile_image`, { method:'POST', headers:{ Authorization:`Bearer ${process.env.CLERK_SECRET_KEY}` }, body: form });
-    const j = await r.json();
-    if(!r.ok) return res.status(r.status).json(j);
-    return res.status(200).json({ ok:true, user:j });
-  }catch(e){ console.error(e); return res.status(500).json({ error:String(e) }); }
-}
-
-3) FILE: pages/api/ads/my.js
-----------------------------------------------------------------------------------------
-import { getAuth } from "@clerk/nextjs/server";
-const store = global.__MY_ADS__ || (global.__MY_ADS__ = new Map());
-const now = () => new Date().toISOString();
-const inDays = (d) => new Date(Date.now()+d*864e5).toISOString();
-export default async function handler(req,res){
-  const { userId } = getAuth(req); if(!userId) return res.status(401).json({ error:'unauthorized' });
-  if(!store.has(userId)) store.set(userId, []);
-  let list = store.get(userId);
-  if(req.method==='GET') return res.json({ items:list });
-  if(req.method==='POST'){
-    const b=req.body||{}; const ad={ id: Math.random().toString(36).slice(2,10), title:b.title||'İlan Başlığı', cat:b.cat||'Genel', status:'pending', createdAt: now(), expiresAt: inDays(30) };
-    list=[ad,...list]; store.set(userId,list); return res.status(201).json({ item:ad, items:list });
+        <div className="actions">
+          <button className="primary" onClick={sendMessage}>
+            💬 {t.message}
+          </button>
+          <div className="rating">
+            <span>{t.rate}:</span>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                className={n <= rating ? "star on" : "star"}
+                onClick={() => saveRating(n)}
+                aria-label={`rate ${n}`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
-  if(req.method==='PATCH'){
-    const { id, action, days=30 } = req.body||{};
-    list = list.map(x=>{ if(x.id!==id) return x; if(action==='extend') return { ...x, status:'live', expiresAt: inDays(days) }; if(action==='pause') return { ...x, status:'pending' }; return x; });
-    store.set(userId,list); return res.json({ items:list });
-  }
-  if(req.method==='DELETE'){ const { id } = req.body||{}; list=list.filter(x=>x.id!==id); store.set(userId,list); return res.json({ items:list }); }
-  return res.status(405).end();
-}
 
-========================================================================================
-*/
+  function SellerView() {
+    return (
+      <>
+        {/* Sekme başlıkları */}
+        <div className="tabs">
+          <button
+            className={tab === "profil" ? "tab active" : "tab"}
+            onClick={() => setTab("profil")}
+          >
+            {t.profileTab}
+          </button>
+          <button
+            className={tab === "ilanlar" ? "tab active" : "tab"}
+            onClick={() => setTab("ilanlar")}
+          >
+            {t.listingsTab}
+          </button>
+        </div>
+
+        {tab === "profil" && <CustomerView />}
+
+        {tab === "ilanlar" && (
+          <div className="lists">
+            <Section title={t.live} items={myAds.live} />
+            <Section title={t.pending} items={myAds.pending} />
+            <Section title={t.expired} items={myAds.expired} />
+          </div>
+        )}
+      </>
+    );
+  }
+
+  function Section({ title, items }) {
+    return (
+      <div className="card">
+        <h3>{title}</h3>
+        {!items?.length ? (
+          <div className="empty">{t.empty}</div>
+        ) : (
+          <div className="ads">
+            {items.map((a, i) => (
+              <a key={i} className="ad" href={a.url || "#"} title={a.title}>
+                <div className="thumb" style={{ backgroundImage: a.img ? `url(${a.img})` : undefined }} />
+                <div className="meta">
+                  <div className="ttl">{a.title}</div>
+                  <div className="row">
+                    <span>{a.cat}</span>
+                    <b>{a.price}</b>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="wrap">
+      <SignedOut>
+        <p>Yönlendiriliyor…</p>
+      </SignedOut>
+
+      <SignedIn>
+        {/* Kapak */}
+        <header className="hero">
+          <div className="bg" />
+          <div className="row">
+            <div className="avatar">
+              <img
+                src={user?.imageUrl || "/assets/images/logo.png"}
+                alt="avatar"
+              />
+              <label className="edit">
+                {busy ? t.uploading : t.editAvatar}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onAvatarChange}
+                  disabled={busy}
+                />
+              </label>
+            </div>
+            <div className="info">
+              <h1>{t.title}</h1>
+              <div className="badges">
+                <span className={role === "seller" ? "badge seller" : "badge"}>
+                  {role === "seller" ? t.sellerBadge : t.customerBadge}
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* İçerik */}
+        <main className="container">
+          {role === "seller" ? <SellerView /> : <CustomerView />}
+        </main>
+      </SignedIn>
+
+      <style jsx>{`
+        .wrap{min-height:100vh; background:
+          radial-gradient(1200px 800px at -10% -10%, rgba(255,255,255,.35), transparent 60%),
+          linear-gradient(120deg,#ff80ab,#a78bfa,#60a5fa,#34d399);
+          background-size:320% 320%; animation:drift 16s ease-in-out infinite;}
+        @keyframes drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+        .hero{position:relative; padding:28px 16px}
+        .hero .bg{position:absolute; inset:0; backdrop-filter: blur(10px); background:rgba(255,255,255,.68); border-bottom:1px solid rgba(255,255,255,.5)}
+        .hero .row{position:relative; z-index:1; display:flex; gap:16px; align-items:center; max-width:980px; margin:0 auto}
+        .avatar{display:grid; gap:8px; align-items:start}
+        .avatar img{width:84px; height:84px; border-radius:20px; object-fit:cover; box-shadow:0 10px 24px rgba(0,0,0,.18)}
+        .edit{display:inline-block; font-size:13px; padding:8px 10px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-weight:700}
+        .edit input{display:none}
+        .info h1{margin:0 0 6px; font-size:26px}
+        .badge{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; font-weight:700}
+        .badge.seller{background:#111827; color:#fff; border-color:#111827}
+
+        .container{max-width:980px; margin:16px auto; padding:0 16px; display:grid; gap:12px}
+
+        .tabs{display:flex; gap:8px; background:rgba(255,255,255,.6); border:1px solid #e5e7eb; padding:6px; border-radius:12px; width:max-content}
+        .tab{border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; color:#111827;}
+        .tab.active{background:#111827; color:#fff}
+
+        .card{background:rgba(255,255,255,.86); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.5); border-radius:16px; padding:14px}
+        .grid{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+        .field label{display:block; font-size:12px; color:#475569}
+        .val{border:1px solid #e5e7eb; background:#fff; border-radius:12px; padding:9px 12px}
+
+        .actions{margin-top:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+        .primary{padding:10px 14px; border-radius:999px; border:none; background:#111827; color:#fff; font-weight:700; cursor:pointer}
+
+        .rating{display:flex; align-items:center; gap:6px}
+        .star{border:none; background:transparent; font-size:20px; cursor:pointer; opacity:.5}
+        .star.on{opacity:1}
+
+        .ads{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+        .ad{display:block; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; background:#fff; color:inherit; text-decoration:none}
+        .thumb{width:100%; aspect-ratio:4/3; background:#f1f5f9; background-size:cover; background-position:center}
+        .meta{padding:10px}
+        .ttl{font-weight:700; margin-bottom:6px}
+        .row{display:flex; justify-content:space-between; color:#475569}
+        .empty{padding:8px 10px; color:#475569}
+      `}</style>
+    </div>
+  );
+}
