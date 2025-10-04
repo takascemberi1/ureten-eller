@@ -1,39 +1,16 @@
-'use client'
+// app/legal/page.jsx  — SERVER COMPONENT (no "use client")
 
-import { useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { redirect } from 'next/navigation'
 
-// Sadece client'ta çalışan küçük bileşen
-function Redirector() {
-  const router = useRouter()
-  const sp = useSearchParams()
+const SUP = ['tr','en','ar','de']
 
-  useEffect(() => {
-    // URL > localStorage > 'tr'
-    let lang = sp?.get('lang') || 'tr'
-    if (typeof window !== 'undefined') {
-      const ls = localStorage.getItem('lang')
-      if (!sp?.get('lang') && ls) lang = ls
-      try { localStorage.setItem('lang', lang) } catch {}
-    }
+export const dynamic = 'force-dynamic' // statik üretimi kapat, istek anında çalışsın
 
-    // /legal/gizlilik?lang=...
-    router.replace(`/legal/gizlilik?lang=${encodeURIComponent(lang)}`)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+export default function LegalIndexPage({ searchParams }) {
+  const q = searchParams || {}
+  const langQ = typeof q.lang === 'string' ? q.lang.toLowerCase() : ''
+  const lang = SUP.includes(langQ) ? langQ : 'tr'
 
-  return null
+  // /legal açılınca /legal/gizlilik?lang=... adresine yönlendir
+  redirect(`/legal/gizlilik?lang=${encodeURIComponent(lang)}`)
 }
-
-export default function LegalIndexRedirect() {
-  // useSearchParams kullanan bileşeni Suspense içine alıyoruz
-  return (
-    <Suspense fallback={null}>
-      <Redirector />
-    </Suspense>
-  )
-}
-
-// Bu sayfayı prerender/SSG etmeye çalışma; client'ta çalışsın
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
