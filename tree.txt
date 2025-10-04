@@ -1,0 +1,19 @@
+app
+├── layout.jsx
+└── legal
+    ├── gizlilik
+    │   └── page.jsx
+    ├── hakkimizda
+    │   └── page.jsx
+    ├── iletisim
+    │   └── page.jsx
+    ├── kullanim-sartlari
+    │   └── page.jsx
+    ├── kvkk-aydinlatma
+    │   └── page.jsx
+    ├── mesafeli-satis-sozlesmesi
+    │   └── page.jsx
+    └── teslimat-iade
+        └── page.jsx
+
+9 directories, 8 files
