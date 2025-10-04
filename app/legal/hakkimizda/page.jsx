@@ -1,28 +1,37 @@
-// app/legal/hakkimizda/page.jsx
-export default function Page({ searchParams }) {
-  const lang = ["tr","en","ar"].includes(searchParams?.lang) ? searchParams.lang : "tr";
-  const T = {
-    tr:{title:"Hakkımızda",body:`Bu site; güvenli kayıt/giriş ve çok dilli yasal dokümanlar için temel bir iskele sunar.
-Misyon: basit, hızlı, güvenli kimlik doğrulama.
-Diller: Türkçe • İngilizce • Arapça.
+// app/legal/hakkimizda/page.jsx — SERVER COMPONENT
+export const dynamic = 'force-static'
 
-İletişim:
-• E-posta: uretenellertr@gmail.com
-• WhatsApp: 05057279143`},
-    en:{title:"About",body:`This site provides a minimal scaffold for secure auth and multilingual legal pages.
-Mission: simple, fast, secure authentication.
-Languages: Turkish • English • Arabic.
+const SUP=['tr','en','ar','de']
+function normalizeLang(r){ const b=String(r||'').toLowerCase().split('-')[0]; return SUP.includes(b)?b:'tr' }
+function pickPack(T,l){ const p=T?.[l]||T?.tr||{}; return {...p,sections:Array.isArray(p.sections)?p.sections:[]} }
+function SellerLegalName(){ return 'Üreten Eller (Şahıs İşletmesi)' }
+function TaxBlockTR(){ return 'VKM: 9530226667 • Silivri Vergi Dairesi' }
 
-Contact:
-• Email: uretenellertr@gmail.com
-• WhatsApp: 05057279143`},
-    ar:{title:"من نحن",body:`يوفّر هذا الموقع هيكلًا بسيطًا لمصادقة آمنة وصفحات قانونية متعددة اللغات.
-المهمة: مصادقة بسيطة وسريعة وآمنة.
-اللغات: التركية • الإنجليزية • العربية.
+const T = {
+  tr:{ title:'Hakkımızda', intro:'El emeği üreticileriyle alıcıları buluşturan adil ve güvenli bir pazaryeriyiz.', sections:[
+    {h:'Misyon',p:'Üreten Elleri güçlendirmek; şeffaf fiyat, güvenli ödeme, açık iade.'},
+    {h:'Yasal',p:`${SellerLegalName()} — ${TaxBlockTR()}`}
+  ]},
+  en:{ title:'About Us', intro:'A fair & safe marketplace connecting makers and buyers.', sections:[
+    {h:'Mission',p:'Empower makers; transparent pricing, secure payments, clear returns.'},
+    {h:'Legal',p:`${SellerLegalName()} — ${TaxBlockTR()}`}
+  ]},
+  ar:{ title:'من نحن', intro:'سوق عادل وآمن يربط المنتجين بالمشترين.', sections:[
+    {h:'المهمة',p:'تمكين المنتجين؛ تسعير شفاف، دفع آمن، إرجاع واضح.'}
+  ]},
+  de:{ title:'Über uns', intro:'Fairer & sicherer Marktplatz für Handgemachtes.', sections:[
+    {h:'Mission',p:'Hersteller stärken; transparente Preise, sichere Zahlungen, klare Retouren.'}
+  ]}
+}
 
-التواصل:
-• البريد: uretenellertr@gmail.com
-• واتساب: 05057279143`}
-  }[lang];
-  return (<article><h1 style={{fontSize:28,marginBottom:12}}>{T.title}</h1><pre style={{whiteSpace:"pre-wrap",font:"inherit",color:"#334155"}}>{T.body}</pre></article>);
+export default function Page({ searchParams }){
+  const lang=normalizeLang(searchParams?.lang)
+  const pack=pickPack(T,lang)
+  return (
+    <article style={{maxWidth:980,margin:'18px auto',padding:'12px 14px'}}>
+      <h1>{pack.title}</h1>
+      {pack.intro && <p>{pack.intro}</p>}
+      {pack.sections.map((s,i)=>(<section key={i} style={{marginTop:12}}>{s.h&&<h2>{s.h}</h2>}{s.p&&<p>{s.p}</p>}</section>))}
+    </article>
+  )
 }
