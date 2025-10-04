@@ -1,24 +1,39 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function LegalIndexRedirect() {
+// Sadece client'ta çalışan küçük bileşen
+function Redirector() {
   const router = useRouter()
   const sp = useSearchParams()
 
   useEffect(() => {
+    // URL > localStorage > 'tr'
     let lang = sp?.get('lang') || 'tr'
     if (typeof window !== 'undefined') {
       const ls = localStorage.getItem('lang')
       if (!sp?.get('lang') && ls) lang = ls
       try { localStorage.setItem('lang', lang) } catch {}
     }
+
+    // /legal/gizlilik?lang=...
     router.replace(`/legal/gizlilik?lang=${encodeURIComponent(lang)}`)
-  }, [router, sp])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return null
 }
 
-// build sırasında SSR yapma, client’te çalıştır:
+export default function LegalIndexRedirect() {
+  // useSearchParams kullanan bileşeni Suspense içine alıyoruz
+  return (
+    <Suspense fallback={null}>
+      <Redirector />
+    </Suspense>
+  )
+}
+
+// Bu sayfayı prerender/SSG etmeye çalışma; client'ta çalışsın
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
