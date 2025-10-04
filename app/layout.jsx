@@ -1,12 +1,12 @@
 'use client'
 
 /**
- * app/layout.jsx — Global Layout
- * - Üst barda dil seçici (TR/EN/AR/DE)
- * - Dil: URL ?lang=xx ↔ localStorage('lang') senkron
- * - <html dir/lang> otomatik ayarlanır (AR = rtl)
+ * app/layout.jsx — Global Layout (fix: useSearchParams sadece Suspense içinde)
+ * - Dil seçici (TR/EN/AR/DE)
+ * - URL ?lang ↔ localStorage senkron
+ * - <html dir/lang> otomatik (AR = rtl)
  * - Mevcut query parametreleri korunur
- * - Client-only çalışması için dynamic = 'force-dynamic'
+ * - useSearchParams kullanan her şey <Suspense> içinde
  */
 
 import { useEffect, useMemo, Suspense } from 'react'
@@ -14,6 +14,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 const SUP = ['tr', 'en', 'ar', 'de']
 
+/* ---------- Hook ---------- */
 function useLangFromUrl() {
   const sp = useSearchParams()
   const router = useRouter()
@@ -45,15 +46,20 @@ function useLangFromUrl() {
       params.set('lang', lang)
       router.replace(`${pathname}?${params.toString()}`)
     }
-    try {
-      window.localStorage.setItem('lang', lang)
-    } catch {}
+    try { window.localStorage.setItem('lang', lang) } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang])
 
   return lang
 }
 
+/* ---------- Suspense içinde çalışan boot bileşeni ---------- */
+function LangBoot() {
+  useLangFromUrl()
+  return null
+}
+
+/* ---------- Dil seçici (Suspense içinde render edilecek) ---------- */
 function LangSelect() {
   const router = useRouter()
   const pathname = usePathname()
@@ -64,9 +70,7 @@ function LangSelect() {
     const val = (e.target.value || 'tr').toLowerCase()
     const params = new URLSearchParams(sp.toString())
     params.set('lang', val)
-    try {
-      window.localStorage.setItem('lang', val)
-    } catch {}
+    try { window.localStorage.setItem('lang', val) } catch {}
     router.replace(`${pathname}?${params.toString()}`)
   }
 
@@ -94,9 +98,10 @@ function LangSelect() {
   )
 }
 
+/* ---------- Root Layout ---------- */
 export default function RootLayout({ children }) {
-  // lang hook çağrısı — URL & <html> senkronize
-  useLangFromUrl()
+  // DİKKAT: Artık burada hook çağrısı yok!
+  // useSearchParams kullanan her şey Suspense içine taşındı.
 
   return (
     <html>
@@ -109,6 +114,11 @@ export default function RootLayout({ children }) {
           background: '#fff',
         }}
       >
+        {/* Lang senkronizasyonu (URL/localStorage/html dir) */}
+        <Suspense fallback={null}>
+          <LangBoot />
+        </Suspense>
+
         <header style={bar}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img
@@ -157,5 +167,5 @@ const foot = {
   background: '#fff',
 }
 
-// Bu layout’un client-only kalması build’de sorun çıkarmasın:
-export const dynamic = 'force-dynamic'
+// İsteğe bağlı: tamamını client’ta tutmak istersen açabilirsin
+// export const dynamic = 'force-dynamic'
