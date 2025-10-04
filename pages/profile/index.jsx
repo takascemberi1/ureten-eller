@@ -1,420 +1,318 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/router";
-import { useAuth, useUser, SignedIn, SignedOut } from "@clerk/nextjs";
+import React, { useEffect, useMemo, useState } from "react";
 
-/* --- i18n (TR varsayılan) --- */
+/*****************************************
+ * ÜRETEN ELLER — TEK PROFİL PANELİ
+ * (Rol Kapısı + Müşteri + Satıcı bir arada)
+ * - Mobil/Tablet/Masaüstü uyumlu
+ * - Dil: localStorage.lang (tr|en|ar|de)
+ * - Sahte veri YOK: API'dan çeker, yoksa boş/skeleton
+ * - En altta SİYAH legal panel
+ *****************************************/
+
 const SUP = ["tr","en","ar","de"];
-const STR = {
-  tr: { title:"Profil", fullName:"Ad Soyad", email:"E-posta", il:"İl", ilce:"İlçe", settings:"Ayarlar",
-    save:"Kaydet", cancel:"Vazgeç", changePwd:"Şifreyi Değiştir", goSecurity:"Güvenlik Sayfasına Git",
-    rating:"Yıldız ver", sellerTabs:{ live:"Yayındaki", pending:"Onay Bekleyen", expired:"Süresi Dolu" },
-    noAds:"Henüz ilan yok.", legal:{ privacy:"Gizlilik", about:"Hakkımızda", contact:"İletişim", terms:"Kullanım Şartları", kvkk:"KVKK Aydınlatma", distance:"Mesafeli Satış Sözleşmesi", returns:"Teslimat & İade" },
-    bottom:{ home:"Ana Sayfa", messages:"Mesajlar", noti:"Bildirimler" },
-    upload:"Resmi Değiştir", uploading:"Yükleniyor…", saved:"Kaydedildi", error:"Bir hata oluştu",
-    pwdNew:"Yeni şifre", pwdNew2:"Yeni şifre (tekrar)", mismatch:"Şifreler eşleşmiyor."
+const T = {
+  tr: {
+    brand:"Üreten Eller",
+    chooseRole:"Nasıl devam edelim?",
+    maker:"Üreten El",
+    customer:"Müşteri",
+    switchRole:"Rol Değiştir",
+    logout:"Çıkış",
+    // Customer
+    c:{
+      hello:"Hoş geldin",
+      profile:"Müşteri Profili",
+      stats:{orders:"Siparişlerim", returns:"İade Talepleri", msgs:"Mesajlar", favs:"Favoriler"},
+      tabs:{orders:"Siparişler", messages:"Mesajlar", favs:"Favoriler", addresses:"Adresler", payments:"Ödemeler", support:"Destek", settings:"Ayarlar"},
+      filter:{all:"Hepsi", waiting:"Hazırlanıyor", shipped:"Kargoda", delivered:"Teslim edildi", refund:"İade"},
+      actions:{view:"Görüntüle", track:"Kargo Takip", confirm:"Teslimi Onayla", openRefund:"İade Talebi", reorder:"Tekrar Sipariş"},
+      empty:"Henüz kayıt yok.", loading:"Yükleniyor…"
+    },
+    // Seller
+    s:{
+      title:"Üreten El Paneli",
+      tabs:{live:"Yayındaki", pending:"Onay Bekleyen", expired:"Süresi Dolmuş"},
+      search:"Ara…", sort:"Sırala", newest:"En yeni", priceAsc:"Fiyat artan", priceDesc:"Fiyat azalan",
+      bulk:"Toplu işlem", selectAll:"Tümünü Seç", unselect:"Seçimi Kaldır", takeDown:"Yayından Al", extend:"Süre Uzat",
+      actions:{edit:"Düzenle", pause:"Yayından Al", clone:"Kopyala", delete:"Sil"},
+      store:"Mağaza Durumu & Evrak",
+      ps:"Ödeme Kurulumu",
+      wallet:"Cüzdan",
+      ordersMini:"Son Siparişler",
+      empty:"Henüz ilan yok.", loading:"Yükleniyor…"
+    },
+    // Footer
+    f:{ corp:"Kurumsal", about:"Hakkımızda", contact:"İletişim", privacy:"Gizlilik", kvkk:"KVKK Aydınlatma",
+        legal:"Gizlilik & Kullanım", terms:"Kullanım Şartları", distance:"Mesafeli Satış", returns:"Teslimat & İade", cookies:"Çerez Politikası",
+        help:"Yardım", banned:"Yasaklı Ürünler", all:"Tüm Legal", home:"Ana Sayfa", copy:(y)=>`© ${y} Üreten Eller` }
   },
-  en:{ title:"Profile", fullName:"Full Name", email:"Email", il:"Province", ilce:"District", settings:"Settings",
-    save:"Save", cancel:"Cancel", changePwd:"Change Password", goSecurity:"Open Security Page",
-    rating:"Rate", sellerTabs:{ live:"Live", pending:"Pending", expired:"Expired" }, noAds:"No listings.",
-    legal:{ privacy:"Privacy", about:"About", contact:"Contact", terms:"Terms", kvkk:"KVKK Notice", distance:"Distance Sales", returns:"Shipping & Returns" },
-    bottom:{ home:"Home", messages:"Messages", noti:"Notifications" },
-    upload:"Change Photo", uploading:"Uploading…", saved:"Saved", error:"Something went wrong", pwdNew:"New password", pwdNew2:"Repeat password", mismatch:"Passwords do not match."
+  en: {
+    brand:"Ureten Eller", chooseRole:"How do you want to continue?", maker:"Maker", customer:"Customer", switchRole:"Switch Role", logout:"Log out",
+    c:{ hello:"Welcome", profile:"Customer Profile", stats:{orders:"Orders", returns:"Returns", msgs:"Messages", favs:"Favorites"}, tabs:{orders:"Orders",messages:"Messages",favs:"Favorites",addresses:"Addresses",payments:"Payments",support:"Support",settings:"Settings"}, filter:{all:"All",waiting:"Processing",shipped:"Shipped",delivered:"Delivered",refund:"Return"}, actions:{view:"View",track:"Track",confirm:"Confirm Delivery",openRefund:"Open Return",reorder:"Re‑order"}, empty:"No data yet.", loading:"Loading…" },
+    s:{ title:"Maker Panel", tabs:{live:"Live", pending:"Pending", expired:"Expired"}, search:"Search…", sort:"Sort", newest:"Newest", priceAsc:"Price asc", priceDesc:"Price desc", bulk:"Bulk actions", selectAll:"Select all", unselect:"Clear", takeDown:"Take down", extend:"Extend", actions:{edit:"Edit", pause:"Take down", clone:"Clone", delete:"Delete"}, store:"Store Status & Docs", ps:"Payment Setup", wallet:"Wallet", ordersMini:"Recent Orders", empty:"No listings.", loading:"Loading…" },
+    f:{ corp:"Company", about:"About", contact:"Contact", privacy:"Privacy", kvkk:"KVKK Notice", legal:"Privacy & Terms", terms:"Terms of Use", distance:"Distance Sales", returns:"Shipping & Returns", cookies:"Cookie Policy", help:"Help", banned:"Prohibited Items", all:"All Legal", home:"Home", copy:(y)=>`© ${y} Ureten Eller` }
   },
-  ar:{ title:"الملف الشخصي", fullName:"الاسم الكامل", email:"البريد", il:"الولاية", ilce:"الحي", settings:"إعدادات",
-    save:"حفظ", cancel:"إلغاء", changePwd:"تغيير كلمة المرور", goSecurity:"صفحة الأمان",
-    rating:"قيّم", sellerTabs:{ live:"منشور", pending:"بانتظار", expired:"منتهي" }, noAds:"لا توجد إعلانات.",
-    legal:{ privacy:"الخصوصية", about:"من نحن", contact:"اتصال", terms:"الشروط", kvkk:"إشعار KVKK", distance:"البيع عن بعد", returns:"التسليم والإرجاع" },
-    bottom:{ home:"الرئيسية", messages:"الرسائل", noti:"الإشعارات" },
-    upload:"تغيير الصورة", uploading:"جارٍ الرفع…", saved:"تم الحفظ", error:"حدث خطأ", pwdNew:"كلمة مرور جديدة", pwdNew2:"تأكيد كلمة المرور", mismatch:"كلمتا المرور غير متطابقتين."
+  ar: {
+    brand:"أُنتِج بالأيادي", chooseRole:"كيف تتابع؟", maker:"المُنتِجة", customer:"العميل", switchRole:"تبديل الدور", logout:"تسجيل خروج",
+    c:{ hello:"مرحبًا", profile:"ملف العميل", stats:{orders:"طلباتي", returns:"الإرجاع", msgs:"الرسائل", favs:"المفضلة"}, tabs:{orders:"الطلبات",messages:"الرسائل",favs:"المفضلة",addresses:"العناوين",payments:"المدفوعات",support:"الدعم",settings:"الإعدادات"}, filter:{all:"الكل",waiting:"قيد التجهيز",shipped:"قيد الشحن",delivered:"تم التسليم",refund:"إرجاع"}, actions:{view:"عرض",track:"تتبع",confirm:"تأكيد التسليم",openRefund:"طلب إرجاع",reorder:"إعادة الطلب"}, empty:"لا بيانات بعد.", loading:"جارٍ التحميل…" },
+    s:{ title:"لوحة المُنتِجة", tabs:{live:"منشور", pending:"بانتظار", expired:"منتهي"}, search:"ابحث…", sort:"رتّب", newest:"الأحدث", priceAsc:"السعر تصاعدي", priceDesc:"السعر تنازلي", bulk:"إجراء جماعي", selectAll:"تحديد الكل", unselect:"مسح", takeDown:"إيقاف النشر", extend:"تمديد", actions:{edit:"تعديل", pause:"إيقاف", clone:"نسخ", delete:"حذف"}, store:"حالة المتجر والوثائق", ps:"إعداد الدفع", wallet:"المحفظة", ordersMini:"أحدث الطلبات", empty:"لا إعلانات.", loading:"جارٍ التحميل…" },
+    f:{ corp:"الشركة", about:"من نحن", contact:"اتصال", privacy:"الخصوصية", kvkk:"إشعار KVKK", legal:"الخصوصية والشروط", terms:"شروط الاستخدام", distance:"البيع عن بُعد", returns:"التسليم والإرجاع", cookies:"سياسة الكوكيز", help:"المساعدة", banned:"المنتجات المحظورة", all:"كل السياسات", home:"الرئيسية", copy:(y)=>`© ${y} أُنتِج بالأيادي` }
   },
-  de:{ title:"Profil", fullName:"Name", email:"E-Mail", il:"Bundesland", ilce:"Bezirk", settings:"Einstellungen",
-    save:"Speichern", cancel:"Abbrechen", changePwd:"Passwort ändern", goSecurity:"Sicherheitsseite",
-    rating:"Bewerten", sellerTabs:{ live:"Aktiv", pending:"Ausstehend", expired:"Abgelaufen" }, noAds:"Keine Inserate.",
-    legal:{ privacy:"Datenschutz", about:"Über uns", contact:"Kontakt", terms:"Nutzungsbedingungen", kvkk:"KVKK-Hinweis", distance:"Fernabsatz", returns:"Lieferung & Rückgabe" },
-    bottom:{ home:"Startseite", messages:"Nachrichten", noti:"Benachr." },
-    upload:"Foto ändern", uploading:"Lädt…", saved:"Gespeichert", error:"Fehler aufgetreten", pwdNew:"Neues Passwort", pwdNew2:"Passwort wiederholen", mismatch:"Passwörter stimmen nicht überein."
+  de: {
+    brand:"Ureten Eller", chooseRole:"Wie möchtest du fortfahren?", maker:"Anbieterin", customer:"Kunde", switchRole:"Rolle wechseln", logout:"Abmelden",
+    c:{ hello:"Willkommen", profile:"Kundenprofil", stats:{orders:"Bestellungen", returns:"Retouren", msgs:"Nachrichten", favs:"Favoriten"}, tabs:{orders:"Bestellungen",messages:"Nachrichten",favs:"Favoriten",addresses:"Adressen",payments:"Zahlungen",support:"Support",settings:"Einstellungen"}, filter:{all:"Alle",waiting:"In Bearbeitung",shipped:"Versandt",delivered:"Zugestellt",refund:"Retoure"}, actions:{view:"Ansehen",track:"Verfolgen",confirm:"Zustellung bestätigen",openRefund:"Retoure öffnen",reorder:"Nochmal kaufen"}, empty:"Noch keine Daten.", loading:"Lädt…" },
+    s:{ title:"Anbieterinnen-Panel", tabs:{live:"Aktiv", pending:"Ausstehend", expired:"Abgelaufen"}, search:"Suchen…", sort:"Sortieren", newest:"Neueste", priceAsc:"Preis ↑", priceDesc:"Preis ↓", bulk:"Sammelaktion", selectAll:"Alle wählen", unselect:"Leeren", takeDown:"Deaktivieren", extend:"Verlängern", actions:{edit:"Bearb.", pause:"Stop", clone:"Kopieren", delete:"Löschen"}, store:"Store‑Status & Doku", ps:"Zahlungssetup", wallet:"Wallet", ordersMini:"Letzte Bestellungen", empty:"Keine Inserate.", loading:"Lädt…" },
+    f:{ corp:"Unternehmen", about:"Über uns", contact:"Kontakt", privacy:"Datenschutz", kvkk:"KVKK‑Hinweis", legal:"Datenschutz & AGB", terms:"Nutzungsbedingungen", distance:"Fernabsatz", returns:"Lieferung & Rückgabe", cookies:"Cookie‑Richtlinie", help:"Hilfe", banned:"Verbotene Artikel", all:"Alle Rechtstexte", home:"Startseite", copy:(y)=>`© ${y} Ureten Eller` }
   }
 };
 
 function useLang(){
-  const [lang,setLang]=useState("tr");
-  useEffect(()=>{
-    if (typeof window !== "undefined") {
-      const s=localStorage.getItem("lang");
-      if(s&&SUP.includes(s)) setLang(s);
-    }
-  },[]);
-  const t = useMemo(()=>STR[lang]||STR.tr,[lang]); return {t,lang,setLang};
+  const [lang,setLang] = useState("tr");
+  useEffect(()=>{ try{ const s=localStorage.getItem("lang"); if(s && SUP.includes(s)) setLang(s);}catch{} },[]);
+  const t = useMemo(()=>T[lang]||T.tr,[lang]);
+  const dir = lang==="ar"?"rtl":"ltr";
+  return {lang,t,dir};
 }
 
-/* --- Sayfa --- */
-export default function ProfilePage(){
-  const { t } = useLang();
-  const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
-  const { user, isLoaded: userLoaded } = useUser();
+export default function ProfileUnified(){
+  const { t, dir } = useLang();
+  const [role,setRole] = useState("" as "seller"|"customer"|"");
 
-  const firstLoad = useRef(true);
-
-  // rol & form
-  const [role,setRole]=useState("customer"); // seller | customer
-  const [rating,setRating]=useState(0);
-  const [settingsOpen,setSettingsOpen]=useState(false);
-  const [busy,setBusy]=useState(false);
-  const [msg,setMsg]=useState("");
-  const [form,setForm]=useState({
-    fullName:"", username:"", il:"", ilce:"", newPwd:"", newPwd2:""
-  });
-  const [tab,setTab]=useState("live");
-  const [ads,setAds]=useState({ live:[], pending:[], expired:[] });
-
-  // Guard
+  // role init
   useEffect(()=>{
-    if(!isLoaded) return;
-    if(!isSignedIn) router.replace("/login");
-  },[isLoaded,isSignedIn,router]);
+    try{ const r = localStorage.getItem("role"); if(r==="seller"||r==="customer") setRole(r as any);}catch{}
+  },[]);
 
-  // Load user + yerel kalıcılık
-  useEffect(()=>{
-    if(!userLoaded || !user || !firstLoad.current) return;
-
-    const meta = (user.unsafeMetadata||user.publicMetadata)||{};
-    let savedFull="", savedIl="", savedIlce="", savedCity="";
-    if (typeof window !== "undefined") {
-      savedFull = localStorage.getItem("full_name")||"";
-      savedIl = localStorage.getItem("il") || "";
-      savedIlce = localStorage.getItem("ilce") || "";
-      savedCity = localStorage.getItem("city") || "";
-    }
-
-    const r = (meta.role==="seller"||meta.role==="customer")?meta.role:(
-      typeof window !== "undefined" ? localStorage.getItem("role")||"customer" : "customer"
-    );
-    setRole(r);
-
-    const fn = savedFull || meta.full_name || [user.firstName,user.lastName].filter(Boolean).join(" ");
-    const il = savedIl || meta.il || "";
-    const ilce = savedIlce || meta.ilce || "";
-    const computedCity = savedCity || (il && ilce ? `${il}/${ilce}` : il || "");
-
-    setForm(f=>({...f, fullName: fn || "", username: user.username || "", il, ilce, newPwd:"", newPwd2:""}));
-
-    if (typeof window !== "undefined" && computedCity) localStorage.setItem("city", computedCity);
-
-    if (typeof window !== "undefined") {
-      const savedRating = Number(localStorage.getItem("my_rating")||0);
-      setRating(Number.isFinite(savedRating)?savedRating:0);
-    }
-
-    preloadAds(r);
-    firstLoad.current = true;
-  },[userLoaded,user]);
-
-  async function preloadAds(r){
-    try{
-      if (typeof window !== "undefined") {
-        const stub = JSON.parse(localStorage.getItem("ads_my")||"{}");
-        setAds({ live: stub.live||[], pending: stub.pending||[], expired: stub.expired||[] });
-      }
-    }catch{}
-    try{
-      const res = await fetch("/api/ads/my");
-      if(res.ok){
-        const data = await res.json();
-        setAds({ live: data.live||[], pending: data.pending||[], expired: data.expired||[] });
-      }
-    }catch{}
-  }
-
-  function computedCity(){
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("city") || "";
-      if(saved) return saved;
-    }
-    if(form.il && form.ilce) return `${form.il}/${form.ilce}`;
-    return form.il || "";
-  }
-
-  function starClick(i){
-    const val = i+1;
-    setRating(val);
-    if (typeof window !== "undefined") localStorage.setItem("my_rating",String(val));
-  }
-
-  async function onAvatarChange(e){
-    const file = e.target.files?.[0];
-    if(!file) return;
-    try{
-      setBusy(true); setMsg(t.uploading);
-      await user.setProfileImage({ file });
-      setMsg(t.saved);
-    }catch(err){
-      console.error(err); setMsg(t.error);
-    }finally{ setBusy(false); setTimeout(()=>setMsg(""),1200); }
-  }
-
-  async function saveSettings(e){
-    e.preventDefault();
-    setBusy(true); setMsg("");
-
-    const cityStr = (form.il && form.ilce) ? `${form.il}/${form.ilce}` : (form.il || "");
-
-    try{
-      const [firstName,...rest] = (form.fullName||"").trim().split(" ");
-      const lastName = rest.join(" ");
-      await user.update({
-        username: form.username || undefined,
-        firstName: firstName || undefined,
-        lastName: lastName || undefined,
-        unsafeMetadata:{
-          ...((user.unsafeMetadata||user.publicMetadata)||{}),
-          full_name: form.fullName, il: form.il || "", ilce: form.ilce || "", city: cityStr, role
-        }
-      });
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem("full_name", form.fullName||"");
-        localStorage.setItem("il", form.il||"");
-        localStorage.setItem("ilce", form.ilce||"");
-        localStorage.setItem("city", cityStr);
-      }
-
-      if(form.newPwd || form.newPwd2){
-        if(form.newPwd !== form.newPwd2){
-          setMsg(t.mismatch); setBusy(false); return;
-        }
-        window.open("/user/profile/security","_blank");
-      }
-
-      setMsg(t.saved);
-      setSettingsOpen(false);
-    }catch(err){
-      console.error(err);
-      setMsg(t.error);
-    }finally{
-      setBusy(false); setTimeout(()=>setMsg(""),1200);
-    }
+  function choose(r){
+    try{ localStorage.setItem("role", r); }catch{}
+    // Sunucuya da yaz (Clerk metadata) — endpoint sende
+    fetch("/api/me/role", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ role:r }) }).catch(()=>{});
+    setRole(r as any);
   }
 
   return (
-    <div className="wrap">
-      <SignedOut><p>Yönlendiriliyor…</p></SignedOut>
-      <SignedIn>
-        {/* Header */}
-        <div className="head">
-          <div className="avatarBox">
-            <div className="ring">
-              <img src={user?.imageUrl||"/assets/images/logo.png"} alt="avatar" />
-            </div>
-            <label className="uploadBtn">
-              {busy ? t.uploading : t.upload}
-              <input type="file" accept="image/*" onChange={onAvatarChange} disabled={busy}/>
-            </label>
-            <div className="rating">
-              <span>{t.rating}: </span>
-              {[0,1,2,3,4].map(i=>(
-                <button key={i} className={i<rating?"star on":"star"} onClick={()=>starClick(i)} aria-label={`star-${i+1}`}>★</button>
-              ))}
-            </div>
-          </div>
-
-          <div className="prim">
-            <h1 className="ttl">{t.title}</h1>
-            <div className="fldRow">
-              <label>{t.fullName}</label>
-              <div className="val">{form.fullName || "—"}</div>
-            </div>
-            <div className="fldRow">
-              <label>{t.email}</label>
-              <div className="val">{user?.primaryEmailAddress?.emailAddress || "—"}</div>
-            </div>
-            <div className="fldRow">
-              <label>Şehir</label>
-              <div className="val">{computedCity() || "—"}</div>
-            </div>
-            <div className="actions">
-              <button className="btn" onClick={()=>setSettingsOpen(true)}>⚙️ {t.settings}</button>
-            </div>
-            {msg && <div className="msg">{msg}</div>}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-sky-50" dir={dir}>
+      {/* Üst bar */}
+      <header className="sticky top-0 z-30 backdrop-blur bg-white/70 border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="font-black tracking-tight">{t.brand}</div>
+          <div className="flex items-center gap-2">
+            {role && <button onClick={()=>setRole("")} className="px-3 py-1.5 rounded-lg border border-slate-200 font-bold">{t.switchRole}</button>}
+            <a href="/logout" className="px-3 py-1.5 rounded-lg border border-slate-200 font-bold hover:bg-slate-900 hover:text-white">{t.logout}</a>
           </div>
         </div>
+      </header>
 
-        {/* Üreten El sekmeleri */}
-        {role==="seller" && (
-          <div className="tabs">
-            {["live","pending","expired"].map(k=>(
-              <button key={k} className={tab===k?"tab active":"tab"} onClick={()=>setTab(k)}>
-                {t.sellerTabs[k]}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* Rol kapısı */}
+      {!role && (
+        <section className="max-w-4xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-5">
+          <RoleCard title={t.maker} emoji="🧶" onClick={()=>choose("seller")} />
+          <RoleCard title={t.customer} emoji="🛍️" onClick={()=>choose("customer")} />
+        </section>
+      )}
 
-        {/* İçerik */}
-        {role==="seller" ? (
-          <AdList items={ads[tab]} emptyText={t.noAds} />
-        ) : (
-          <div className="card">
-            <h3>📬 Mesaj Gönder</h3>
-            <textarea className="txt" placeholder="Mesajınız…"></textarea>
-            <div><button className="btn dark">Gönder</button></div>
-          </div>
-        )}
+      {/* Rol içerikleri */}
+      {role==="customer" && <CustomerPanel t={t} />}
+      {role==="seller" && <SellerPanel t={t} />}
 
-        {/* Legal — en altta */}
-        <div className="legal">
-          <a href="/legal/gizlilik">{t.legal.privacy}</a>
-          <a href="/legal/hakkimizda">{t.legal.about}</a>
-          <a href="/legal/iletisim">{t.legal.contact}</a>
-          <a href="/legal/kullanim-sartlari">{t.legal.terms}</a>
-          <a href="/legal/kvkk-aydinlatma">{t.legal.kvkk}</a>
-          <a href="/legal/mesafeli-satis-sozlesmesi">{t.legal.distance}</a>
-          <a href="/legal/teslimat-iade">{t.legal.returns}</a>
-        </div>
-
-        {/* Alt bar */}
-        <footer className="bottombar">
-          <div className="mini"><button className="iconbtn" onClick={()=>router.push("/home.html")}>🏠</button><span>{t.bottom.home}</span></div>
-          <div className="mini"><button className="iconbtn" onClick={()=>router.push("/messages")}>💬</button><span>{t.bottom.messages}</span></div>
-          <div className="mini"><button className="iconbtn" onClick={()=>router.push("/notifications")}>🔔</button><span>{t.bottom.noti}</span></div>
-        </footer>
-
-        {/* Ayarlar Paneli */}
-        {settingsOpen && (
-          <div className="sheet" role="dialog" aria-modal="true">
-            <div className="sheetCard">
-              <div className="sheetHead">
-                <strong>⚙️ {t.settings}</strong>
-                <button className="btn ghost" onClick={()=>setSettingsOpen(false)}>✕</button>
-              </div>
-              <form onSubmit={saveSettings} className="grid">
-                <label className="lab">
-                  <span>{t.fullName}</span>
-                  <input value={form.fullName} onChange={e=>setForm({...form, fullName:e.target.value})}/>
-                </label>
-                <label className="lab">
-                  <span>Kullanıcı adı</span>
-                  <input value={form.username} onChange={e=>setForm({...form, username:e.target.value})}/>
-                </label>
-                <label className="lab">
-                  <span>{t.il}</span>
-                  <input value={form.il} onChange={e=>setForm({...form, il:e.target.value})}/>
-                </label>
-                <label className="lab">
-                  <span>{t.ilce}</span>
-                  <input value={form.ilce} onChange={e=>setForm({...form, ilce:e.target.value})}/>
-                </label>
-
-                <div className="sep"/>
-                <div className="lab"><strong>🔒 {t.changePwd}</strong></div>
-                <label className="lab">
-                  <span>{t.pwdNew}</span>
-                  <input type="password" value={form.newPwd} onChange={e=>setForm({...form, newPwd:e.target.value})} />
-                </label>
-                <label className="lab">
-                  <span>{t.pwdNew2}</span>
-                  <input type="password" value={form.newPwd2} onChange={e=>setForm({...form, newPwd2:e.target.value})} />
-                </label>
-                <a className="link" href="/user/profile/security" target="_blank" rel="noreferrer">➡️ {t.goSecurity}</a>
-
-                <div className="row">
-                  <button type="button" className="btn ghost" onClick={()=>setSettingsOpen(false)}>{t.cancel}</button>
-                  <button className="btn dark" disabled={busy}>{busy?"…":t.save}</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </SignedIn>
-
-      <style jsx>{`
-        .wrap{min-height:100vh; padding:16px 14px 96px; background:
-          radial-gradient(1000px 700px at -10% -10%, rgba(255,255,255,.35), transparent 60%),
-          linear-gradient(120deg,#ff80ab,#a78bfa,#60a5fa,#34d399);
-          background-size:320% 320%; animation:drift 16s ease-in-out infinite;}
-        @keyframes drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-
-        .head{max-width:980px; margin:10px auto; display:grid; gap:14px; grid-template-columns:180px 1fr;
-          background:rgba(255,255,255,.86); border:1px solid rgba(255,255,255,.5); border-radius:18px; padding:14px; backdrop-filter:blur(10px)}
-        @media (max-width:720px){ .head{grid-template-columns:1fr} }
-
-        .avatarBox{display:grid; gap:10px; justify-items:center}
-        .ring{padding:6px; border-radius:999px; background:conic-gradient(from 0deg, #ff80ab, #a78bfa, #60a5fa, #34d399, #ff80ab)}
-        .ring img{display:block; width:120px; height:120px; object-fit:cover; border-radius:999px; background:#f1f5f9}
-        .uploadBtn{font-weight:700; border:1px solid #e5e7eb; background:#fff; padding:8px 12px; border-radius:12px; cursor:pointer}
-        .uploadBtn input{display:none}
-
-        .rating{display:flex; align-items:center; gap:6px; font-weight:700}
-        .star{border:none; background:transparent; font-size:20px; cursor:pointer; opacity:.35}
-        .star.on{opacity:1}
-
-        .prim .ttl{margin:0 0 6px; font-size:24px}
-        .fldRow{display:grid; grid-template-columns:160px 1fr; gap:8px; align-items:center}
-        .fldRow label{font-weight:700; color:#111827}
-        .val{padding:8px 12px; border-radius:12px; background:#fff; border:1px solid #e5e7eb}
-        .actions{margin-top:10px}
-        .btn{border:1px solid #e5e7eb; background:#fff; color:#111827; border-radius:12px; padding:9px 12px; font-weight:800; cursor:pointer}
-        .btn.dark{background:#111827; color:#fff; border-color:#111827}
-        .btn.ghost{background:#fff}
-
-        .msg{margin-top:8px; font-size:13px; background:#f1f5f9; border:1px solid #e5e7eb; padding:6px 10px; border-radius:10px; width:max-content}
-
-        .tabs{max-width:980px; margin:10px auto; display:flex; gap:8px; background:rgba(255,255,255,.72); border:1px solid #e5e7eb; padding:6px; border-radius:14px}
-        .tab{border:none; padding:10px 14px; border-radius:12px; font-weight:800; cursor:pointer}
-        .tab.active{background:#111827; color:#fff}
-
-        .card{max-width:980px; margin:10px auto; background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:14px}
-        .ads{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-        .ad{border:1px solid #e5e7eb; border-radius:14px; overflow:hidden; background:#fff}
-        .thumb{width:100%; aspect-ratio:4/3; background:#f1f5f9}
-        .body{padding:10px}
-        .title{margin:0 0 6px; font-size:14px; font-weight:800}
-
-        .legal{max-width:980px; margin:16px auto 96px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
-        .legal a{border:1px solid #e5e7eb; background:#fff; color:#111827; border-radius:999px; padding:8px 12px; font-weight:700; text-decoration:none}
-
-        .bottombar{position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; justify-content:space-around; gap:8px; padding:10px;
-          background:rgba(255,255,255,.92); border-top:1px solid #e5e7eb; backdrop-filter:blur(10px)}
-        .iconbtn{width:42px; height:42px; border:1px solid #e5e7eb; background:#fff; border-radius:12px; cursor:pointer}
-        .mini{display:grid; place-items:center; gap:4px; font-size:12px}
-
-        /* settings sheet */
-        .sheet{position:fixed; inset:0; background:rgba(0,0,0,.35); display:grid; place-items:end center; padding:20px; z-index:50}
-        .sheetCard{width:100%; max-width:640px; background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden}
-        .sheetHead{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid #e5e7eb}
-        .grid{display:grid; gap:10px; padding:12px}
-        .lab{display:grid; gap:6px}
-        input, textarea{padding:9px 12px; border:1px solid #e5e7eb; border-radius:12px; font-size:14px; outline:none}
-        .txt{min-height:120px}
-        .row{display:flex; gap:10px; justify-content:flex-end}
-        .sep{height:1px; background:#e5e7eb; margin:4px 0}
-        .link{font-weight:800; text-decoration:none; color:#111827}
-      `}</style>
+      <LegalFooter t={t} />
     </div>
   );
 }
 
-/* --- küçük alt bileşen: ilan listesi --- */
-function AdList({ items, emptyText }){
-  if(!items || !items.length){
-    return <div className="card"><p>{emptyText}</p></div>;
-  }
+function RoleCard({ title, emoji, onClick }){
   return (
-    <div className="card">
-      <div className="ads">
-        {items.map((a,idx)=>(
-          <a key={idx} className="ad" href={a.url||"#"}>
-            <div className="thumb" style={a.img?{backgroundImage:`url(${a.img})`,backgroundSize:"cover",backgroundPosition:"center"}:undefined}/>
-            <div className="body">
-              <h4 className="title">{a.title||"İlan"}</h4>
-              <div style={{display:"flex",justifyContent:"space-between",color:"#475569",fontSize:13}}>
-                <span>{a.cat||""}</span><b>{a.price||""}</b>
-              </div>
-            </div>
-          </a>
+    <button onClick={onClick} className="bg-white/80 border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow transition text-left">
+      <div className="text-5xl">{emoji}</div>
+      <div className="mt-3 text-2xl font-black">{title}</div>
+      <div className="mt-1 text-slate-500">Devam etmek için tıkla.</div>
+    </button>
+  );
+}
+
+/*************** MÜŞTERİ PANELİ ***************/
+function CustomerPanel({ t }){
+  const [tab,setTab] = useState("orders");
+  const [filter,setFilter] = useState("all");
+  const [orders,setOrders] = useState([]); // gerçek veri
+  const [loading,setLoading] = useState(false);
+
+  useEffect(()=>{ let alive=true; (async()=>{
+    try{ setLoading(true);
+      const q = filter==="all"?"":"?status="+filter; // waiting|shipped|delivered|refund
+      const r = await fetch("/api/orders/my"+q);
+      if(r.ok){ const d = await r.json(); if(alive) setOrders(Array.isArray(d)?d:(d.items||[])); }
+      else if(alive) setOrders([]);
+    }catch{ if(alive) setOrders([]);} finally{ if(alive) setLoading(false);} })();
+    return ()=>{ alive=false };
+  },[filter]);
+
+  return (
+    <section className="max-w-6xl mx-auto px-4 py-6 grid gap-5">
+      {/* başlık + sayaclar */}
+      <div className="bg-white/80 border border-slate-200 rounded-3xl p-5 shadow-sm">
+        <div className="text-slate-500 text-sm">{t.c.hello}</div>
+        <h1 className="text-2xl md:text-3xl font-black">{t.c.profile}</h1>
+      </div>
+
+      {/* sekmeler */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {Object.entries(t.c.tabs).map(([k,label])=> (
+          <button key={k} onClick={()=>setTab(k)} className={`px-4 py-2 rounded-xl border font-extrabold flex-shrink-0 ${tab===k? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 hover:border-slate-400"}`}>{label}</button>
         ))}
       </div>
-    </div>
+
+      {tab==="orders" && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4">
+          <div className="flex flex-wrap gap-2 mb-3">
+            {Object.entries(t.c.filter).map(([k,label])=> (
+              <button key={k} onClick={()=>setFilter(k)} className={`px-3 py-1.5 rounded-full border text-sm font-semibold ${filter===k?"bg-slate-900 text-white border-slate-900":"bg-white border-slate-200"}`}>{label}</button>
+            ))}
+          </div>
+          {loading && <div className="text-slate-500">{t.c.loading}</div>}
+          {!loading && orders.length===0 && <div className="text-slate-500">{t.c.empty}</div>}
+          <div className="grid gap-3">
+            {orders.map((o)=> (
+              <div key={o.id} className="border border-slate-200 rounded-2xl p-4 bg-white/60">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div>
+                    <div className="text-sm text-slate-500">#{o.code||o.id} • {o.date}</div>
+                    <div className="font-black">{o.title}</div>
+                    <div className="text-slate-700 font-semibold mt-1">{o.price}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 rounded-full text-xs font-bold border bg-slate-50 border-slate-300 text-slate-800">{t.c.filter[o.status]||t.c.filter.all}</span>
+                    <button className="px-3 py-1.5 rounded-lg border border-slate-200 font-bold">{t.c.actions.view}</button>
+                    {o.tracking && <button className="px-3 py-1.5 rounded-lg border border-slate-200 font-bold">{t.c.actions.track}</button>}
+                    {(o.status==="shipped"||o.status==="delivered") && <button className="px-3 py-1.5 rounded-lg border border-slate-200 font-bold">{t.c.actions.openRefund}</button>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab!=="orders" && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 text-slate-500">{t.c.empty}</div>
+      )}
+    </section>
+  );
+}
+
+/*************** SATICI PANELİ ***************/
+function SellerPanel({ t }){
+  const [tab,setTab] = useState("live");
+  const [items,setItems] = useState([]);
+  const [loading,setLoading] = useState(false);
+  const [selected,setSelected] = useState({});
+
+  async function load(status){
+    try{ setLoading(true);
+      const r = await fetch(`/api/ads/my?status=${status}`);
+      if(r.ok){ const d = await r.json(); setItems(Array.isArray(d)?d:(d.items||[])); } else setItems([]);
+    }catch{ setItems([]);} finally{ setLoading(false); }
+  }
+  useEffect(()=>{ load(tab); },[tab]);
+
+  function toggleAll(){
+    if(Object.keys(selected).length===items.length){ setSelected({}); return; }
+    const all = {}; items.forEach(x=>{ all[x.id]=true;}); setSelected(all);
+  }
+  function toggle(id){ setSelected(s=>({ ...s, [id]: !s[id] })); }
+
+  async function bulk(action){
+    const ids = Object.keys(selected).filter(k=>selected[k]); if(!ids.length) return;
+    await fetch("/api/ads/bulk",{ method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action, ids })}).catch(()=>{});
+    load(tab);
+  }
+
+  return (
+    <section className="max-w-6xl mx-auto px-4 py-6 grid gap-5">
+      <div className="bg-white/80 border border-slate-200 rounded-3xl p-5 shadow-sm">
+        <h1 className="text-2xl md:text-3xl font-black">{t.s.title}</h1>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {Object.entries(t.s.tabs).map(([k,label])=> (
+          <button key={k} onClick={()=>setTab(k)} className={`px-4 py-2 rounded-xl border font-extrabold flex-shrink-0 ${tab===k? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 hover:border-slate-400"}`}>{label}</button>
+        ))}
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-2xl p-4">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <button onClick={toggleAll} className="px-3 py-1.5 rounded-full border text-sm font-semibold">{t.s.selectAll}</button>
+          <div className="ml-auto flex gap-2">
+            <button onClick={()=>bulk("pause")} className="px-3 py-1.5 rounded-lg border text-sm font-bold">{t.s.takeDown}</button>
+            <button onClick={()=>bulk("extend")} className="px-3 py-1.5 rounded-lg border text-sm font-bold">{t.s.extend}</button>
+          </div>
+        </div>
+
+        {loading && <div className="text-slate-500">{t.s.loading}</div>}
+        {!loading && items.length===0 && <div className="text-slate-500">{t.s.empty}</div>}
+
+        <div className="grid gap-3">
+          {items.map(it=> (
+            <div key={it.id} className="border border-slate-200 rounded-2xl p-4 bg-white/60">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <input type="checkbox" checked={!!selected[it.id]} onChange={()=>toggle(it.id)} className="mt-1"/>
+                  <div>
+                    <div className="font-black">{it.title}</div>
+                    <div className="text-slate-600 text-sm">{it.cat} • {it.price}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1.5 rounded-lg border text-sm font-bold">{t.s.actions.edit}</button>
+                  <button className="px-3 py-1.5 rounded-lg border text-sm font-bold">{t.s.actions.pause}</button>
+                  <button className="px-3 py-1.5 rounded-lg border text-sm font-bold">{t.s.actions.clone}</button>
+                  <button className="px-3 py-1.5 rounded-lg border text-sm font-bold text-rose-700 border-rose-200">{t.s.actions.delete}</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Ödeme & Evrak & Cüzdan özet kartları (placeholder, API gelince doldur) */}
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4"><div className="font-extrabold mb-1">{t.s.store}</div><div className="text-slate-500 text-sm">Evrak tamamlanmadıysa burada kırmızı uyarı çıkacak.</div></div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-4"><div className="font-extrabold mb-1">{t.s.ps}</div><div className="text-slate-500 text-sm">PayTR/iyzico aktivasyon durumu.</div></div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-4"><div className="font-extrabold mb-1">{t.s.wallet}</div><div className="text-slate-500 text-sm">Blokede/Ödenen özetleri.</div></div>
+      </div>
+    </section>
+  );
+}
+
+/*************** LEGAL FOOTER ***************/
+function LegalFooter({ t }){
+  const Y = new Date().getFullYear();
+  return (
+    <footer className="mt-10 bg-[#0b0b0f] text-slate-300">
+      <div className="max-w-6xl mx-auto px-4 py-8 grid gap-6 md:grid-cols-3">
+        <section>
+          <h4 className="text-white font-bold mb-2">{t.f.corp}</h4>
+          <a href="/legal/hakkimizda" className="block hover:text-white">{t.f.about}</a>
+          <a href="/legal/iletisim" className="block hover:text-white">{t.f.contact}</a>
+          <a href="/legal/gizlilik" className="block hover:text-white">{t.f.privacy}</a>
+          <a href="/legal/kvkk-aydinlatma" className="block hover:text-white">{t.f.kvkk}</a>
+        </section>
+        <section>
+          <h4 className="text-white font-bold mb-2">{t.f.legal}</h4>
+          <a href="/legal/kullanim-sartlari" className="block hover:text-white">{t.f.terms}</a>
+          <a href="/legal/mesafeli-satis-sozlesmesi" className="block hover:text-white">{t.f.distance}</a>
+          <a href="/legal/teslimat-iade" className="block hover:text-white">{t.f.returns}</a>
+          <a href="/legal/cerez-politikasi" className="block hover:text-white">{t.f.cookies}</a>
+        </section>
+        <section>
+          <h4 className="text-white font-bold mb-2">{t.f.help}</h4>
+          <a href="/legal/topluluk-kurallari#yasakli-urunler" className="block hover:text-white">{t.f.banned}</a>
+          <a href="/legal" className="block hover:text-white">{t.f.all}</a>
+          <a href="/" className="block hover:text-white">{t.f.home}</a>
+        </section>
+      </div>
+      <div className="border-t border-[#232329] text-center py-3 text-sm">{t.f.copy(Y)}</div>
+    </footer>
   );
 }
