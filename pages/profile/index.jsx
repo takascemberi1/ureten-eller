@@ -321,7 +321,7 @@ export default function Profile(){
 
             {/* KYC */}
             <article className="card">
-              <h3>🪪 {t.kyc}</h3>
+              <h3>🪪 {t.kyc} <small style={{marginLeft:8,color:"#64748b",fontSize:12,fontWeight:600}}>{lang==="tr" ? "Bu bilgiler yalnızca hesap sahibi ve ödeme sağlayıcı (PSP) arasında saklı tutulur; vitrinde görünmez." : lang==="en" ? "These details are kept only between the account owner and the payment provider (PSP); not shown on the storefront." : lang==="ar" ? "تُحفظ هذه البيانات بين صاحب الحساب ومزوّد الدفع فقط (PSP)؛ لا تظهر للعامة." : "Diese Angaben bleiben nur zwischen Kontoinhaber und Zahlungsanbieter (PSP); nicht öffentlich sichtbar."}</small></h3>
     <KycNotice lang={lang} />
               <div className="grid">
                 <label className="lab"><span>{t.idnum}</span><input value={kyc.idnum} onChange={e=>setKyc({...kyc,idnum:e.target.value})}/></label>
