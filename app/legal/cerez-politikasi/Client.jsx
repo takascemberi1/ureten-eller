@@ -300,32 +300,6 @@ export default function CookiePolicyPage() {
         </article>
       </main>
 
-      {/* Siyah mega-footer */}
-      <footer className="footer">
-        <div className="wrap gridf">
-          <section>
-            <h4>Kurumsal</h4>
-            <a href="/legal/hakkimizda">Hakkımızda</a>
-            <a href="/legal/iletisim">İletişim</a>
-            <a href="/legal/gizlilik">Gizlilik</a>
-            <a href="/legal/kvkk-aydinlatma">KVKK Aydınlatma</a>
-          </section>
-          <section>
-            <h4>Gizlilik & Kullanım</h4>
-            <a href="/legal/kullanim-sartlari">Kullanım Şartları</a>
-            <a href="/legal/mesafeli-satis-sozlesmesi">Mesafeli Satış</a>
-            <a href="/legal/teslimat-iade">Teslimat & İade</a>
-            <a href="/legal/cerez-politikasi">Çerez Politikası</a>
-          </section>
-          <section>
-            <h4>Yardım</h4>
-            <a href="/legal/gizlilik#haklar">Kullanıcı Hakları</a>
-            <a href="/legal/kullanim-sartlari#yasaklar">Yasaklı Ürünler</a>
-            <a href="/legal/iletisim">Destek</a>
-          </section>
-        </div>
-        <div className="wrap copy">© {new Date().getFullYear()} Üreten Eller</div>
-      </footer>
 
       <style jsx>{`
         :root{
