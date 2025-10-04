@@ -1,66 +1,59 @@
-// =========================================================
-<h4>Kurumsal</h4>
-<ul>
-<li><a href="/legal/hakkimizda">Hakkımızda</a></li>
-<li><a href="/legal/iletisim">İletişim</a></li>
-<li><a href="/legal/gizlilik">Gizlilik</a></li>
-<li><a href="/legal/kvkk-aydinlatma">KVKK Aydınlatma</a></li>
-<li><a href="/">Ana Sayfa</a></li>
-</ul>
-</section>
-<section>
-<h4>Gizlilik & Kullanım</h4>
-<ul>
-<li><a href="/legal/kullanim-sartlari">Kullanım Şartları</a></li>
-<li><a href="/legal/mesafeli-satis-sozlesmesi">Mesafeli Satış Sözleşmesi</a></li>
-<li><a href="/legal/teslimat-iade">Teslimat & İade</a></li>
-<li><a href="/legal/gizlilik#cerez">Çerez Yönetimi</a></li>
-</ul>
-</section>
-<section>
-<h4>Yardım</h4>
-<ul>
-<li><a href="/legal/gizlilik#haklar">Kullanıcı Hakları</a></li>
-<li><a href="/legal/kullanim-sartlari#yasaklar">Yasaklı Ürünler</a></li>
-<li><a href="/legal/iletisim">Destek</a></li>
-</ul>
-</section>
-</div>
-<div className="ue-wrap ue-bottom">
-<p>© {new Date().getFullYear()} Üreten Eller • Tüm hakları saklıdır.</p>
-</div>
-</footer>
+export const metadata = {
+  title: "Üreten Eller",
+  description: "Üreten Eller pazar yeri"
+};
 
+export default function RootLayout({ children }) {
+  const footerStyle = {
+    background: "#0b0b0f",
+    color: "#e5e7eb",
+    marginTop: "32px",
+  };
+  const wrapStyle = { maxWidth: "1100px", margin: "0 auto", padding: "0 16px" };
+  const gridStyle = {
+    display: "grid",
+    gap: "24px",
+    padding: "28px 0",
+    gridTemplateColumns: "repeat(3,1fr)"
+  };
+  const h4Style = { margin: "0 0 8px 0", color: "#fff" };
+  const linkStyle = { display: "block", color: "#d1d5db", textDecoration: "none", margin: "6px 0" };
+  const copyStyle = { borderTop: "1px solid #232329", padding: "12px 0", textAlign: "center" };
 
-<style jsx global>{`
-:root{
---ink:#0f172a;--muted:#475569;--paper:#ffffff;--bg:#f8fafc;
---brand:#111827;--focus:#0ea5e9;--line:#e5e7eb;--footer:#0b0b0f
-}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
-font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-.ue-wrap{max-width:1100px;margin:0 auto;padding:0 16px}
-.ue-topbar{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line)}
-.ue-topbar .ue-wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
-.brand{font-weight:700;color:var(--brand);text-decoration:none}
-.ue-btn{display:inline-block;border:1px solid var(--line);padding:8px 12px;border-radius:10px;text-decoration:none;color:var(--brand)}
-.ue-btn:hover{border-color:var(--focus)}
-.ue-main{min-height:60vh}
-.ue-content{background:var(--paper);margin:18px auto;border:1px solid var(--line);border-radius:14px;padding:18px}
-.ue-content h1{margin:.2em 0 .4em}
-.ue-content h2{margin:1.2em 0 .6em}
-.ue-content h3{margin:1em 0 .5em}
-.ue-content p, .ue-content li{line-height:1.65}
-.ue-footer{background:var(--footer);color:#e5e7eb;margin-top:32px}
-.ue-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:28px 16px}
-.ue-footer h4{margin:0 0 8px 0;color:#fff}
-.ue-footer a{color:#d1d5db;text-decoration:none}
-.ue-footer a:hover{color:#fff}
-.ue-bottom{border-top:1px solid #232329;padding:12px 16px;display:flex;align-items:center;height:48px}
-@media (max-width:900px){.ue-grid{grid-template-columns:1fr 1fr}}
-@media (max-width:640px){.ue-grid{grid-template-columns:1fr}.ue-content{padding:14px}}
-`}</style>
-</body>
-</html>
-);
+  return (
+    <html lang="tr">
+      <body style={{background:"#f8fafc", minHeight:"100vh", margin:0}}>
+        {children}
+
+        {/* Siyah mega-footer (tüm sayfalarda altta) */}
+        <footer style={footerStyle}>
+          <div style={wrapStyle}>
+            <div style={gridStyle}>
+              <section>
+                <h4 style={h4Style}>Kurumsal</h4>
+                <a href="/legal/hakkimizda" style={linkStyle}>Hakkımızda</a>
+                <a href="/legal/iletisim" style={linkStyle}>İletişim</a>
+                <a href="/legal/gizlilik" style={linkStyle}>Gizlilik</a>
+                <a href="/legal/kvkk-aydinlatma" style={linkStyle}>KVKK Aydınlatma</a>
+              </section>
+              <section>
+                <h4 style={h4Style}>Gizlilik &amp; Kullanım</h4>
+                <a href="/legal/kullanim-sartlari" style={linkStyle}>Kullanım Şartları</a>
+                <a href="/legal/mesafeli-satis-sozlesmesi" style={linkStyle}>Mesafeli Satış</a>
+                <a href="/legal/teslimat-iade" style={linkStyle}>Teslimat &amp; İade</a>
+                <a href="/legal/cerez-politikasi" style={linkStyle}>Çerez Politikası</a>
+              </section>
+              <section>
+                <h4 style={h4Style}>Yardım</h4>
+                <a href="/legal/topluluk-kurallari#yasakli-urunler" style={linkStyle}>Yasaklı Ürünler</a>
+                <a href="/legal" style={linkStyle}>Tüm Legal</a>
+                <a href="/" style={linkStyle}>Ana Sayfa</a>
+              </section>
+            </div>
+            <div style={copyStyle}>© {new Date().getFullYear()} Üreten Eller</div>
+          </div>
+        </footer>
+      </body>
+    </html>
+  );
 }
