@@ -1,635 +1,600 @@
 "use client";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useAuth, useUser, SignedIn, SignedOut } from "@clerk/nextjs";
 
-/* ------------------------------------------------------------------
-   4 DİL DESTEK (light)  —  home.html'deki localStorage('lang') ile uyumlu
--------------------------------------------------------------------*/
+/* ======================= i18n (4 Dil) ======================= */
 const SUP = ["tr","en","ar","de"];
 const STR = {
   tr: {
-    roleSeller:"Satıcı", roleCustomer:"Müşteri", profile:"Profil", settings:"Ayarlar",
-    logout:"Çıkış", save:"Kaydet", cancel:"Vazgeç", edit:"Düzenle", changePwd:"Şifreyi Değiştir",
-    kyc:"Kimlik / Ödeme Açma", wallet:"Cüzdan", store:"Mağaza", listings:"İlanlarım", orders:"Siparişler",
-    addresses:"Adres Defteri", reviews:"Yorumlarım", favorites:"Favoriler", notifications:"Bildirimler",
-    add:"Ekle", update:"Güncelle", delete:"Sil", default:"Varsayılan", setDefault:"Varsayılan Yap",
-    city:"İl", district:"İlçe", phone:"Telefon", email:"E-posta", fullName:"Ad Soyad",
-    sellerStats:"Mağaza Skorları", avgPrep:"Ort. hazırlama", onTimeShip:"Zamanında kargo %",
-    cancelRate:"İptal oranı", returnRate:"İade oranı",
-    kycWarn:"Ödemeleri açmak için aşağıyı doldur ve onaya gönder.",
-    tckn:"TC Kimlik / VKN", iban:"IBAN", taxOffice:"Vergi Dairesi", address:"Adres",
-    sendForReview:"Onaya Gönder", kycStatus:"KYC Durumu",
-    statusPending:"Beklemede", statusApproved:"Onaylı", statusRejected:"Reddedildi",
-    walletHeld:"Blokede (escrow)", walletAvailable:"Çekilebilir", walletPaid:"Ödenenler",
-    ordersEmpty:"Henüz sipariş yok.",
-    oPaid:"Ödeme Alındı", oPreparing:"Hazırlanıyor", oShipped:"Kargoda", oDelivered:"Teslim edildi",
-    oReleased:"Para çözüldü", oRefunded:"İade", oCanceled:"İptal",
-    markPreparing:"Hazırlanıyor Yap", markShipped:"Kargoya Ver", markDelivered:"Teslim Edildi",
-    trackingNo:"Takip No", carrier:"Kargo Firması",
-    view:"Görüntüle", track:"Kargo Takip", reorder:"Tekrar Sipariş", refund:"İade Talebi",
-    confirmDelivery:"Teslim Aldım", writeReview:"Yorum Yaz", send:"Gönder",
-    storeCover:"Kapak Görseli", storeAbout:"Mağaza Hakkında", badges:"Rozetler",
-    vacation:"Tatil Modu", from:"Başlangıç", until:"Bitiş",
-    notifEmail:"E-posta", notifWhats:"WhatsApp", notifPush:"Push Bildirim",
-    addAddress:"Adres Ekle", name:"İsim", line:"Adres satırı", cityShort:"İl", districtShort:"İlçe",
-    zip:"PK", invoiceInfo:"Fatura Bilgisi (TC/VKN)", actions:"İşlemler",
-    reviewNote:"Yorum yalnızca teslim edilmiş siparişler için açılır.", rating:"Puan",
-    footerHead1:"Kurumsal", footerHead2:"Gizlilik & Kullanım", footerHead3:"Yardım",
-    about:"Hakkımızda", contact:"İletişim", privacy:"Gizlilik", kvkk:"KVKK Aydınlatma",
-    terms:"Kullanım Şartları", distance:"Mesafeli Satış", returns:"Teslimat & İade",
-    cookies:"Çerez Politikası", banned:"Yasaklı Ürünler", help:"Yardım", allLegal:"Tüm Legal",
-    home:"Ana Sayfa", rights:"© 2025 Üreten Eller",
+    pageTitle:"Profil",
+    logout:"Çıkış",
+    roleSeller:"Satıcı",
+    roleCustomer:"Müşteri",
+    settings:"Ayarlar",
+    save:"Kaydet", cancel:"Vazgeç",
+    changePwd:"Şifreyi Değiştir", goSecurity:"Güvenlik Sayfası",
+    upload:"Profil Fotoğrafını Değiştir", uploading:"Yükleniyor…", saved:"Kaydedildi", error:"Bir hata oluştu",
+
+    // Ortak kart
+    fullName:"Ad Soyad", email:"E‑posta", phone:"Telefon", city:"Şehir",
+
+    // Satıcı
+    store:"Mağaza", cover:"Kapak Görseli (yalnızca admin)", storeAbout:"Mağaza Hakkında", badges:"Rozetler",
+    fastShip:"Hızlı kargo", vacation:"Tatil Modu", kyc:"Kimlik / Ödeme Açma", sendForApproval:"Onaya Gönder",
+    idnum:"TC Kimlik / VKN", iban:"IBAN", taxOffice:"Vergi Dairesi", address:"Adres", kycStatus:"KYC Durumu",
+    pending:"Beklemede", approved:"Onaylı", rejected:"Reddedildi", wallet:"Cüzdan",
+    escrow:"Blokede (escrow)", withdrawable:"Çekilebilir", paidOut:"Ödenenler",
+
+    orders:"Siparişler", preparing:"Hazırlanıyor", ship:"Kargoya Ver", shipped:"Kargoda", delivered:"Teslim edildi",
+    markPreparing:"Hazırlanıyor Yap", markShipped:"Kargoya Ver", markDelivered:"Teslim Edildi Yap", trackingNo:"Takip No",
+    trackCargo:"Kargo Takip", problem:"Sorun Bildir",
+
+    listings:"İlanlarım", live:"Yayında", waitApproval:"Onay Bekleyen", expired:"Süresi Dolmuş", rejectedTab:"Reddedildi",
+    extend:"Süre Uzat", remove:"Sil", noData:"Henüz kayıt yok.",
+
+    // Müşteri
+    myOrders:"Siparişlerim", view:"Görüntüle", confirmReceived:"Teslim Aldım", return:"İade Talebi", reorder:"Tekrar Sipariş",
+    writeReview:"Yorum Yaz", rating:"Puan", comment:"Yorum", submit:"Gönder", alreadyReviewed:"Bu siparişe zaten yorum yaptınız.", badWords:"Uygunsuz kelime tespit edildi.",
+
+    // Ayarlar
+    profileSettings:"Profil Ayarları", username:"Kullanıcı adı", province:"İl", district:"İlçe",
+
+    // Alt menü
+    home:"Ana Sayfa", messages:"Mesajlar", noti:"Bildirimler",
+
+    // Siyah legal footer
+    corp:"Kurumsal", about:"Hakkımızda", contact:"İletişim", privacy:"Gizlilik", terms:"Kullanım Şartları",
+    kvkk:"KVKK Aydınlatma", terms2:"Gizlilik & Kullanım", distance:"Mesafeli Satış", returns:"Teslimat & İade",
+    cookies:"Çerez Politikası", help:"Yardım", banned:"Yasaklı Ürünler", allLegal:"Tüm Legal", homepage:"Ana Sayfa",
+    copyright:"© 2025 Üreten Eller",
   },
-  en: {
-    roleSeller:"Seller", roleCustomer:"Customer", profile:"Profile", settings:"Settings",
-    logout:"Sign out", save:"Save", cancel:"Cancel", edit:"Edit", changePwd:"Change Password",
-    kyc:"KYC / Payout", wallet:"Wallet", store:"Store", listings:"Listings", orders:"Orders",
-    addresses:"Addresses", reviews:"Reviews", favorites:"Favorites", notifications:"Notifications",
-    add:"Add", update:"Update", delete:"Delete", default:"Default", setDefault:"Make Default",
-    city:"Province", district:"District", phone:"Phone", email:"Email", fullName:"Full Name",
-    sellerStats:"Store KPIs", avgPrep:"Avg. prep time", onTimeShip:"On-time ship %",
-    cancelRate:"Cancel rate", returnRate:"Return rate",
-    kycWarn:"Fill and submit for review to enable payouts.",
-    tckn:"National ID / TAX", iban:"IBAN", taxOffice:"Tax Office", address:"Address",
-    sendForReview:"Submit", kycStatus:"KYC Status",
-    statusPending:"Pending", statusApproved:"Approved", statusRejected:"Rejected",
-    walletHeld:"Held (escrow)", walletAvailable:"Available", walletPaid:"Paid out",
-    ordersEmpty:"No orders yet.",
-    oPaid:"Paid", oPreparing:"Preparing", oShipped:"Shipped", oDelivered:"Delivered",
-    oReleased:"Released", oRefunded:"Refunded", oCanceled:"Canceled",
-    markPreparing:"Mark Preparing", markShipped:"Ship", markDelivered:"Mark Delivered",
-    trackingNo:"Tracking No", carrier:"Carrier",
-    view:"View", track:"Track", reorder:"Reorder", refund:"Request Refund",
-    confirmDelivery:"Confirm Delivery", writeReview:"Write Review", send:"Send",
-    storeCover:"Cover Image", storeAbout:"About Store", badges:"Badges",
-    vacation:"Vacation Mode", from:"From", until:"Until",
-    notifEmail:"Email", notifWhats:"WhatsApp", notifPush:"Push",
-    addAddress:"Add Address", name:"Name", line:"Address line", cityShort:"City", districtShort:"District",
-    zip:"ZIP", invoiceInfo:"Invoice Info (ID/VAT)", actions:"Actions",
-    reviewNote:"Reviews open only after delivery.", rating:"Rating",
-    footerHead1:"Company", footerHead2:"Privacy & Terms", footerHead3:"Help",
-    about:"About", contact:"Contact", privacy:"Privacy", kvkk:"KVKK Notice",
-    terms:"Terms", distance:"Distance Sales", returns:"Shipping & Returns",
-    cookies:"Cookie Policy", banned:"Banned Products", help:"Help", allLegal:"All Legal",
-    home:"Home", rights:"© 2025 Ureten Eller",
+  en:{
+    pageTitle:"Profile", logout:"Sign out", roleSeller:"Seller", roleCustomer:"Customer", settings:"Settings",
+    save:"Save", cancel:"Cancel", changePwd:"Change Password", goSecurity:"Open Security Page",
+    upload:"Change Profile Photo", uploading:"Uploading…", saved:"Saved", error:"Something went wrong",
+    fullName:"Full Name", email:"Email", phone:"Phone", city:"City",
+    store:"Store", cover:"Cover Image (admin only)", storeAbout:"About Store", badges:"Badges",
+    fastShip:"Fast shipping", vacation:"Vacation Mode", kyc:"KYC / Enable Payouts", sendForApproval:"Send for Approval",
+    idnum:"National/Tax ID", iban:"IBAN", taxOffice:"Tax Office", address:"Address", kycStatus:"KYC Status",
+    pending:"Pending", approved:"Approved", rejected:"Rejected", wallet:"Wallet",
+    escrow:"In Escrow", withdrawable:"Withdrawable", paidOut:"Paid Out",
+    orders:"Orders", preparing:"Preparing", ship:"Ship", shipped:"Shipped", delivered:"Delivered",
+    markPreparing:"Mark Preparing", markShipped:"Mark Shipped", markDelivered:"Mark Delivered", trackingNo:"Tracking No",
+    trackCargo:"Track", problem:"Report Issue",
+    listings:"My Listings", live:"Live", waitApproval:"Pending", expired:"Expired", rejectedTab:"Rejected",
+    extend:"Extend", remove:"Delete", noData:"No data yet.",
+    myOrders:"My Orders", view:"View", confirmReceived:"Confirm Received", return:"Request Return", reorder:"Re‑order",
+    writeReview:"Write Review", rating:"Rating", comment:"Comment", submit:"Submit", alreadyReviewed:"You already reviewed this.", badWords:"Inappropriate words detected.",
+    profileSettings:"Profile Settings", username:"Username", province:"Province", district:"District",
+    home:"Home", messages:"Messages", noti:"Notifications",
+    corp:"Company", about:"About", contact:"Contact", privacy:"Privacy", terms:"Terms",
+    kvkk:"KVKK Notice", terms2:"Privacy & Terms", distance:"Distance Sales", returns:"Shipping & Returns",
+    cookies:"Cookie Policy", help:"Help", banned:"Banned Items", allLegal:"All Legal", homepage:"Home",
+    copyright:"© 2025 Ureten Eller",
   },
-  ar: {
-    roleSeller:"بائعة", roleCustomer:"عميلة", profile:"الملف", settings:"الإعدادات",
-    logout:"تسجيل خروج", save:"حفظ", cancel:"إلغاء", edit:"تعديل", changePwd:"تغيير كلمة المرور",
-    kyc:"اعرف عميلك/الدفعات", wallet:"المحفظة", store:"المتجر", listings:"إعلاناتي", orders:"طلباتي",
-    addresses:"العناوين", reviews:"المراجعات", favorites:"المفضلة", notifications:"الإشعارات",
-    add:"إضافة", update:"تحديث", delete:"حذف", default:"افتراضي", setDefault:"اجعله افتراضيًا",
-    city:"الولاية", district:"الحي", phone:"الهاتف", email:"البريد", fullName:"الاسم الكامل",
-    sellerStats:"مؤشرات المتجر", avgPrep:"متوسط التحضير", onTimeShip:"نسبة الشحن بالوقت",
-    cancelRate:"نسبة الإلغاء", returnRate:"نسبة الإرجاع",
-    kycWarn:"فعّل الدفعات بإرسال المعلومات للمراجعة.",
-    tckn:"هوية/ضريبة", iban:"IBAN", taxOffice:"دائرة الضرائب", address:"العنوان",
-    sendForReview:"إرسال", kycStatus:"حالة KYC",
-    statusPending:"قيد الانتظار", statusApproved:"مقبول", statusRejected:"مرفوض",
-    walletHeld:"مُحتجَز (escrow)", walletAvailable:"متاح", walletPaid:"تم السداد",
-    ordersEmpty:"لا توجد طلبات.",
-    oPaid:"دُفع", oPreparing:"قيد التحضير", oShipped:"بالشحن", oDelivered:"تم التسليم",
-    oReleased:"تم التحويل", oRefunded:"مرتجع", oCanceled:"ملغي",
-    markPreparing:"تحضير", markShipped:"إرسال", markDelivered:"تم التسليم",
-    trackingNo:"رقم التتبع", carrier:"شركة الشحن",
-    view:"عرض", track:"تتبع", reorder:"إعادة طلب", refund:"طلب إرجاع",
-    confirmDelivery:"استلمت", writeReview:"أضف مراجعة", send:"إرسال",
-    storeCover:"صورة الغلاف", storeAbout:"عن المتجر", badges:"أوسمة",
-    vacation:"وضع الإجازة", from:"من", until:"إلى",
-    notifEmail:"بريد", notifWhats:"واتساب", notifPush:"دفع",
-    addAddress:"أضف عنوانًا", name:"الاسم", line:"سطر العنوان", cityShort:"مدينة", districtShort:"حي",
-    zip:"رمز", invoiceInfo:"بيانات الفاتورة", actions:"إجراءات",
-    reviewNote:"المراجعات متاحة بعد التسليم فقط.", rating:"تقييم",
-    footerHead1:"الشركة", footerHead2:"الخصوصية والشروط", footerHead3:"مساعدة",
-    about:"من نحن", contact:"اتصال", privacy:"الخصوصية", kvkk:"KVKK",
-    terms:"الشروط", distance:"البيع عن بُعد", returns:"التسليم والإرجاع",
-    cookies:"سياسة الكوكيز", banned:"منتجات محظورة", help:"مساعدة", allLegal:"الكل" ,
-    home:"الرئيسية", rights:"© 2025 Üreten Eller",
+  ar:{
+    pageTitle:"الملف", logout:"تسجيل الخروج", roleSeller:"بائعة", roleCustomer:"عميل", settings:"إعدادات",
+    save:"حفظ", cancel:"إلغاء", changePwd:"تغيير كلمة المرور", goSecurity:"صفحة الأمان",
+    upload:"تغيير الصورة", uploading:"جارٍ الرفع…", saved:"تم الحفظ", error:"حدث خطأ",
+    fullName:"الاسم الكامل", email:"البريد", phone:"الهاتف", city:"المدينة",
+    store:"المتجر", cover:"صورة الغلاف (للمشرف)", storeAbout:"نبذة عن المتجر", badges:"الأوسمة",
+    fastShip:"شحن سريع", vacation:"وضع الإجازة", kyc:"توثيق / تفعيل المدفوعات", sendForApproval:"إرسال للموافقة",
+    idnum:"الرقم الوطني/الضريبي", iban:"IBAN", taxOffice:"دائرة الضرائب", address:"العنوان", kycStatus:"حالة التوثيق",
+    pending:"بالانتظار", approved:"مقبول", rejected:"مرفوض", wallet:"المحفظة",
+    escrow:"محجوز (ضمان)", withdrawable:"قابل للسحب", paidOut:"تم الدفع",
+    orders:"الطلبات", preparing:"قيد التحضير", ship:"إرسال", shipped:"مشحون", delivered:"تم التسليم",
+    markPreparing:"تحضير", markShipped:"إرسال", markDelivered:"تم التسليم", trackingNo:"رقم التتبع",
+    trackCargo:"تتبع", problem:"تبليغ مشكلة",
+    listings:"إعلاناتي", live:"منشور", waitApproval:"بانتظار", expired:"منتهي", rejectedTab:"مرفوض",
+    extend:"تمديد", remove:"حذف", noData:"لا يوجد بيانات.",
+    myOrders:"طلباتي", view:"عرض", confirmReceived:"استلمت الطلب", return:"طلب إرجاع", reorder:"إعادة الطلب",
+    writeReview:"اكتب مراجعة", rating:"تقييم", comment:"تعليق", submit:"إرسال", alreadyReviewed:"قمت بالمراجعة سابقًا.", badWords:"كلمات غير لائقة.",
+    profileSettings:"إعدادات الملف", username:"اسم المستخدم", province:"الولاية", district:"الحي",
+    home:"الرئيسية", messages:"الرسائل", noti:"الإشعارات",
+    corp:"الشركة", about:"من نحن", contact:"اتصال", privacy:"الخصوصية", terms:"الشروط",
+    kvkk:"إشعار KVKK", terms2:"الخصوصية والشروط", distance:"البيع عن بعد", returns:"التسليم والإرجاع",
+    cookies:"سياسة الكوكيز", help:"مساعدة", banned:"منتجات محظورة", allLegal:"الكل قانوني", homepage:"الصفحة الرئيسية",
+    copyright:"© 2025 Üreten Eller",
   },
-  de: {
-    roleSeller:"Anbieterin", roleCustomer:"Kunde", profile:"Profil", settings:"Einstellungen",
-    logout:"Abmelden", save:"Speichern", cancel:"Abbrechen", edit:"Bearbeiten", changePwd:"Passwort ändern",
-    kyc:"KYC / Auszahlungen", wallet:"Wallet", store:"Shop", listings:"Inserate", orders:"Bestellungen",
-    addresses:"Adressen", reviews:"Bewertungen", favorites:"Favoriten", notifications:"Benachrichtigungen",
-    add:"Hinzufügen", update:"Aktualisieren", delete:"Löschen", default:"Standard", setDefault:"Als Standard",
-    city:"Bundesland", district:"Bezirk", phone:"Telefon", email:"E‑Mail", fullName:"Name",
-    sellerStats:"Shop-KPIs", avgPrep:"Ø Vorbereitung", onTimeShip:"Pünktl. Versand %",
-    cancelRate:"Storno‑Rate", returnRate:"Retouren‑Rate",
-    kycWarn:"Zum Auszahlen Daten einreichen.",
-    tckn:"ID/Steuer", iban:"IBAN", taxOffice:"Finanzamt", address:"Adresse",
-    sendForReview:"Senden", kycStatus:"KYC‑Status",
-    statusPending:"Ausstehend", statusApproved:"Genehmigt", statusRejected:"Abgelehnt",
-    walletHeld:"Gesperrt (Escrow)", walletAvailable:"Verfügbar", walletPaid:"Ausgezahlt",
-    ordersEmpty:"Noch keine Bestellungen.",
-    oPaid:"Bezahlt", oPreparing:"In Arbeit", oShipped:"Versandt", oDelivered:"Zugestellt",
-    oReleased:"Freigegeben", oRefunded:"Erstattet", oCanceled:"Storniert",
-    markPreparing:"Als in Arbeit", markShipped:"Versenden", markDelivered:"Als zugestellt",
-    trackingNo:"Sendungsnr.", carrier:"Dienst",
-    view:"Ansehen", track:"Verfolgen", reorder:"Nochmal", refund:"Retoure anfordern",
-    confirmDelivery:"Erhalten", writeReview:"Bewertung schreiben", send:"Senden",
-    storeCover:"Titelbild", storeAbout:"Über den Shop", badges:"Abzeichen",
-    vacation:"Urlaubs‑Modus", from:"Von", until:"Bis",
-    notifEmail:"E‑Mail", notifWhats:"WhatsApp", notifPush:"Push",
-    addAddress:"Adresse hinzufügen", name:"Name", line:"Adresse", cityShort:"Ort", districtShort:"Bezirk",
-    zip:"PLZ", invoiceInfo:"Rechnungsinfo", actions:"Aktionen",
-    reviewNote:"Bewertungen erst nach Zustellung.", rating:"Bewertung",
-    footerHead1:"Unternehmen", footerHead2:"Datenschutz & AGB", footerHead3:"Hilfe",
-    about:"Über uns", contact:"Kontakt", privacy:"Datenschutz", kvkk:"KVKK",
-    terms:"Nutzungsbedingungen", distance:"Fernabsatz", returns:"Versand & Rückgabe",
-    cookies:"Cookie‑Richtlinie", banned:"Verbotene Produkte", help:"Hilfe", allLegal:"Alle Rechtl.",
-    home:"Startseite", rights:"© 2025 Üreten Eller",
+  de:{
+    pageTitle:"Profil", logout:"Abmelden", roleSeller:"Anbieterin", roleCustomer:"Kunde", settings:"Einstellungen",
+    save:"Speichern", cancel:"Abbrechen", changePwd:"Passwort ändern", goSecurity:"Sicherheitsseite",
+    upload:"Foto ändern", uploading:"Lädt…", saved:"Gespeichert", error:"Fehler",
+    fullName:"Name", email:"E‑Mail", phone:"Telefon", city:"Stadt",
+    store:"Shop", cover:"Titelbild (nur Admin)", storeAbout:"Über den Shop", badges:"Abzeichen",
+    fastShip:"Schneller Versand", vacation:"Urlaubsmodus", kyc:"KYC / Auszahlungen", sendForApproval:"Zur Prüfung senden",
+    idnum:"Steuer/ID", iban:"IBAN", taxOffice:"Finanzamt", address:"Adresse", kycStatus:"KYC‑Status",
+    pending:"Ausstehend", approved:"Bestätigt", rejected:"Abgelehnt", wallet:"Wallet",
+    escrow:"In Treuhand", withdrawable:"Auszahlbar", paidOut:"Ausgezahlt",
+    orders:"Bestellungen", preparing:"In Bearbeitung", ship:"Versenden", shipped:"Unterwegs", delivered:"Zugestellt",
+    markPreparing:"Als in Bearbeitung", markShipped:"Als versendet", markDelivered:"Als zugestellt", trackingNo:"Sendungsnr.",
+    trackCargo:"Sendung", problem:"Problem melden",
+    listings:"Meine Inserate", live:"Aktiv", waitApproval:"Prüfung", expired:"Abgelaufen", rejectedTab:"Abgelehnt",
+    extend:"Verlängern", remove:"Löschen", noData:"Noch keine Daten.",
+    myOrders:"Meine Bestellungen", view:"Ansehen", confirmReceived:"Erhalten", return:"Retoure", reorder:"Nochmal bestellen",
+    writeReview:"Bewertung schreiben", rating:"Bewertung", comment:"Kommentar", submit:"Senden", alreadyReviewed:"Schon bewertet.", badWords:"Unangemessene Wörter.",
+    profileSettings:"Profil‑Einstellungen", username:"Benutzername", province:"Bundesland", district:"Bezirk",
+    home:"Start", messages:"Nachrichten", noti:"Benachr.",
+    corp:"Unternehmen", about:"Über uns", contact:"Kontakt", privacy:"Datenschutz", terms:"Nutzungsbed.",
+    kvkk:"KVKK‑Hinweis", terms2:"Privacy & Terms", distance:"Fernabsatz", returns:"Lieferung & Rückgabe",
+    cookies:"Cookie‑Richtlinie", help:"Hilfe", banned:"Verbotene Artikel", allLegal:"Alle Rechtstexte", homepage:"Startseite",
+    copyright:"© 2025 Ureten Eller",
   }
 };
 
 function useLang(){
-  const [lang,setLang]=useState("tr");
+  const [lang,setLang] = useState("tr");
   useEffect(()=>{
-    if (typeof window!=="undefined"){
+    if(typeof window!=="undefined"){
       const s = localStorage.getItem("lang");
-      if (s && SUP.includes(s)) setLang(s);
+      if(s && SUP.includes(s)) setLang(s);
+      document.documentElement.lang = s||"tr";
+      document.documentElement.dir = (s==="ar")?"rtl":"ltr";
     }
   },[]);
-  useEffect(()=>{
-    if (typeof document!=="undefined"){
-      document.documentElement.lang = lang;
-      document.documentElement.dir = (lang==="ar"?"rtl":"ltr");
-    }
-  },[lang]);
   const t = useMemo(()=>STR[lang]||STR.tr,[lang]);
   return {t,lang,setLang};
 }
 
-/* ------------------------------------------------------------------
-   Yardımcılar (DEMO veri & para hesaplama)
--------------------------------------------------------------------*/
-const PRICE = (n)=> new Intl.NumberFormat("tr-TR",{style:"currency",currency:"TRY"}).format(Number(n||0));
+/* ======================= Yardımcılar ======================= */
+async function jget(url){ try{ const r=await fetch(url,{cache:"no-store"}); return r.ok?await r.json():null; }catch{ return null; } }
+async function jpatch(url,body){ try{ const r=await fetch(url,{method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body||{})}); return await r.json(); }catch{ return {ok:false}; } }
+async function jpost(url,body){ try{ const r=await fetch(url,{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body||{})}); return await r.json(); }catch{ return {ok:false}; } }
 
-function computeWallet(orders){
-  let held=0, available=0, paid=0;
-  (orders||[]).forEach(o=>{
-    const amt = Number(o.amount||0);
-    if (["paid","preparing","shipped","delivered"].includes(o.status)) held += amt;
-    if (o.status==="released") available += amt; // çekilebilir gibi gösteriyoruz
-    if (o.status==="paid_out") paid += amt; // ileride payout logu
-  });
-  return {held,available,paid};
-}
+const BAD_WORDS = [/sik|orospu|am(ı|i)na|küfür|hakaret|terör/i]; // istemediğiniz kelimeleri arttırın
+const isClean = (txt)=> !BAD_WORDS.some(rx=>rx.test(txt||""));
 
-/* ------------------------------------------------------------------
-   Ana Bileşen
--------------------------------------------------------------------*/
+/* ======================= Profil Sayfası ======================= */
 export default function Profile(){
   const { t } = useLang();
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, signOut } = useAuth();
   const { user, isLoaded: userLoaded } = useUser();
 
-  const [role,setRole] = useState("customer"); // URL ile değişmez, metadata'dan gelir
-  const [orders,setOrders] = useState([]);
-  const [kyc,setKyc] = useState({ tckn:"", iban:"", taxOffice:"", address:"", status:"pending" });
-  const [storeInfo,setStoreInfo] = useState({ cover:"", about:"", badges:["Hızlı kargo","Yüksek memnuniyet"], vacation:false, from:"", until:"" });
-  const [settingsOpen,setSettingsOpen] = useState(false);
-  const [notif,setNotif] = useState({ email:true, whats:false, push:false });
-  const [addresses,setAddresses] = useState([]);
+  const [role, setRole] = useState("customer"); // server/metadata belirler
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const [orders, setOrders] = useState([]); // hem satıcı hem müşteri için doldurulur
+  const [listings, setListings] = useState({ live:[], pending:[], expired:[], rejected:[] });
+
+  const [wallet, setWallet] = useState({ escrow:0, withdrawable:0, paidOut:0 });
+
+  const [storeForm, setStoreForm] = useState({ coverUrl:"", about:"", fast:false, vacation:false });
+  const [kyc, setKyc] = useState({ idnum:"", iban:"", tax:"", addr:"", status:"pending" });
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
 
   // Guard
-  useEffect(()=>{ if(!isLoaded) return; if(!isSignedIn) router.replace("/login"); },[isLoaded,isSignedIn,router]);
-
-  // İlk yük — rol, kyc, siparişler, adresler
   useEffect(()=>{
-    if(!userLoaded || !user) return;
+    if(!isLoaded) return;
+    if(!isSignedIn) router.replace("/login");
+  },[isLoaded,isSignedIn,router]);
+
+  // Kullanıcıyı ve datayı yükle
+  useEffect(()=>{
+    if(!userLoaded||!user) return;
     const meta = (user.unsafeMetadata||user.publicMetadata)||{};
-    const r = meta.role==="seller"?"seller":"customer";
+    const r = (meta.role==="seller"||meta.role==="customer")?meta.role:(typeof window!=="undefined"? localStorage.getItem("role")||"customer":"customer");
     setRole(r);
+    setIsAdmin(Boolean(meta.isAdmin));
 
-    try{
-      // DEMO: localStorage sipariş tohumla (yoksa)
-      const raw = localStorage.getItem("orders_demo");
-      if(raw){ setOrders(JSON.parse(raw)); }
-      else{
-        const seed = [
-          { id:"UE-241002-11", title:"El yapımı makrome duvar süsü", amount:480, status:"preparing", date:"2025-10-01", sellerId:"u_sell_1", customerId:"u_cust_1", track:"", items:[{sku:"UE-241002-11",qty:1,price:480}], carrier:"" },
-          { id:"UE-240928-05", title:"Zeytinyağlı doğal sabun seti", amount:320, status:"shipped", date:"2025-09-28", sellerId:"u_sell_1", customerId:"u_cust_2", track:"PTT123456789TR", items:[{sku:"UE-240928-05",qty:1,price:320}], carrier:"PTT" },
-          { id:"UE-240920-02", title:"Vegan kurabiye kutusu", amount:190, status:"delivered", date:"2025-09-20", sellerId:"u_sell_2", customerId:"u_cust_1", track:"YR123456", items:[{sku:"UE-240920-02",qty:1,price:190}], carrier:"Yurtiçi" },
-        ];
-        localStorage.setItem("orders_demo", JSON.stringify(seed));
-        setOrders(seed);
-      }
-    }catch{}
+    // Wallet
+    jget("/api/wallet/my").then(d=>{ if(d&&d.ok){ setWallet({escrow:d.escrow||0, withdrawable:d.withdrawable||0, paidOut:d.paidOut||0}); } });
 
-    try{
-      const k = JSON.parse(localStorage.getItem("kyc")||"{}");
-      setKyc({ tckn:k.tckn||"", iban:k.iban||"", taxOffice:k.taxOffice||"", address:k.address||"", status:k.status||"pending" });
-    }catch{}
+    // Orders
+    jget(`/api/orders/my?role=${r}`).then(d=>{ if(d&&d.ok){ setOrders(d.items||[]); } });
 
-    try{
-      const s = JSON.parse(localStorage.getItem("store_info")||"{}");
-      setStoreInfo({ cover:s.cover||"", about:s.about||"", badges:Array.isArray(s.badges)?s.badges:["Hızlı kargo"], vacation:!!s.vacation, from:s.from||"", until:s.until||"" });
-    }catch{}
+    // Listings (satıcı)
+    if(r==="seller"){
+      jget("/api/ads/my").then(d=>{ if(d){ setListings({ live:d.live||[], pending:d.pending||[], expired:d.expired||[], rejected:d.rejected||[] }); } });
+    }
 
-    try{
-      const a = JSON.parse(localStorage.getItem("addresses")||"[]");
-      setAddresses(Array.isArray(a)?a:[]);
-    }catch{}
+    // Store (satıcı) & KYC stub (local fallback)
+    if(r==="seller" && typeof window!=="undefined"){
+      try{ const s=JSON.parse(localStorage.getItem("store_form")||"{}"); setStoreForm({coverUrl:s.coverUrl||"", about:s.about||"", fast:Boolean(s.fast), vacation:Boolean(s.vacation)});}catch{}
+      try{ const k=JSON.parse(localStorage.getItem("kyc_form")||"{}"); setKyc({ idnum:k.idnum||"", iban:k.iban||"", tax:k.tax||"", addr:k.addr||"", status:k.status||"pending"}); }catch{}
+    }
   },[userLoaded,user]);
 
-  // Yardımcı: siparişte aksiyon
-  async function orderAction(id, action, extra){
+  /* --------------- Satıcı: sipariş aksiyonları --------------- */
+  const doPreparing = async (id)=>{ const r=await jpatch(`/api/orders/${id}`,{action:"markPreparing"}); if(r?.ok){ refreshOrders(); } };
+  const doShipped = async (id)=>{
+    const trackingNo = prompt(t.trackingNo+"?")||"";
+    if(!trackingNo.trim()) return;
+    const r=await jpatch(`/api/orders/${id}`,{action:"markShipped", trackingNo});
+    if(r?.ok){ refreshOrders(); }
+  };
+  const doDelivered = async (id)=>{ const r=await jpatch(`/api/orders/${id}`,{action:"markDelivered"}); if(r?.ok){ refreshOrders(); } };
+
+  const refreshOrders = ()=>{ jget(`/api/orders/my?role=${role}`).then(d=>{ if(d&&d.ok){ setOrders(d.items||[]); } }); };
+
+  /* --------------- Müşteri: yorum/puan tek sefer --------------- */
+  const [rvOpen,setRvOpen] = useState(false);
+  const [rvOrder,setRvOrder] = useState(null);
+  const [rvStars,setRvStars] = useState(0);
+  const [rvText,setRvText] = useState("");
+  const reviewedKey = (o)=> `rev_${o?.id}`;
+  const canReview = (o)=>{
+    if(role!=="customer") return false;
+    if(!(o&&o.status==="delivered")) return false;
+    if(typeof window!=="undefined"){ if(localStorage.getItem(reviewedKey(o))) return false; }
+    return true;
+  };
+  const submitReview = async ()=>{
+    if(!isClean(rvText)) { alert(STR.tr.badWords); return; }
+    // DEMO: server yerine local işaretleyelim; prod'da /api/reviews/create çağır.
+    if(typeof window!=="undefined" && rvOrder){ localStorage.setItem(reviewedKey(rvOrder),"1"); }
+    setRvOpen(false); setRvOrder(null); setRvStars(0); setRvText("");
+    alert(STR.tr.saved);
+  };
+
+  /* --------------- Ayarlar --------------- */
+  const openSettings=()=>setSettingsOpen(true);
+  const closeSettings=()=>setSettingsOpen(false);
+  const [form,setForm] = useState({ fullName:"", username:"", il:"", ilce:"" });
+  useEffect(()=>{
+    if(!user) return;
+    const meta=(user.unsafeMetadata||user.publicMetadata)||{};
+    const fn = meta.full_name || [user.firstName,user.lastName].filter(Boolean).join(" ") || "";
+    const il = meta.il || ""; const ilce=meta.ilce||"";
+    setForm({fullName:fn, username:user.username||"", il, ilce});
+  },[user]);
+
+  async function onAvatarChange(e){
+    const file = e.target.files?.[0]; if(!file) return;
+    try{ setBusy(true); setMsg(t.uploading); await user.setProfileImage({ file }); setMsg(t.saved);}catch{ setMsg(t.error);} finally{ setBusy(false); setTimeout(()=>setMsg(""),1200);} }
+
+  async function saveSettings(e){
+    e.preventDefault(); setBusy(true);
     try{
-      // Gerçek API varsa kullan
-      const res = await fetch(`/api/orders/${id}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action, ...extra })});
-      if(res.ok){
-        const js = await res.json();
-        const o = js.order;
-        const next = (orders||[]).map(x=> x.id===o.id? o : x);
-        setOrders(next); localStorage.setItem("orders_demo", JSON.stringify(next));
-        return;
-      }
-    }catch{}
-    // DEMO fallback (local)
-    const next = (orders||[]).map(o=>{
-      if(o.id!==id) return o;
-      if(action==="markPreparing") return {...o, status:"preparing"};
-      if(action==="markShipped") return {...o, status:"shipped", track: (extra?.trackingNo||o.track||""), carrier:(extra?.carrier||o.carrier||"") };
-      if(action==="markDelivered") return {...o, status:"delivered"};
-      if(action==="refund") return {...o, status:"refunded"};
-      return o;
-    });
-    setOrders(next); localStorage.setItem("orders_demo", JSON.stringify(next));
-  }
+      const [firstName,...rest] = (form.fullName||"").trim().split(" ");
+      const lastName = rest.join(" ");
+      await user.update({ username: form.username||undefined, firstName:firstName||undefined, lastName:lastName||undefined,
+        unsafeMetadata:{ ...((user.unsafeMetadata||user.publicMetadata)||{}), full_name:form.fullName, il:form.il||"", ilce:form.ilce||""}
+      });
+      setMsg(t.saved); setSettingsOpen(false);
+    }catch{ setMsg(t.error);} finally{ setBusy(false); setTimeout(()=>setMsg(""),1200);} }
 
-  // Hızlı hesaplamalar
-  const wallet = useMemo(()=>computeWallet(orders),[orders]);
+  /* --------------- Satıcı: mağaza & KYC --------------- */
+  const saveStore = ()=>{
+    if(typeof window!=="undefined"){
+      localStorage.setItem("store_form", JSON.stringify(storeForm));
+      alert(t.saved);
+    }
+  };
+  const sendKyc = ()=>{
+    const st = { ...kyc, status:"pending" };
+    if(typeof window!=="undefined"){ localStorage.setItem("kyc_form", JSON.stringify(st)); }
+    alert(t.pending);
+  };
 
-  // Adres helpers
-  function addAddress(){
-    const a = { id: "ad_"+Math.random().toString(36).slice(2), name:"", line:"", city:"", district:"", zip:"", invoice:"" , def: addresses.length===0 };
-    const next=[...addresses,a]; setAddresses(next); localStorage.setItem("addresses",JSON.stringify(next));
-  }
-  function updAddress(id, patch){
-    const next = addresses.map(x=> x.id===id? {...x,...patch}:x); setAddresses(next); localStorage.setItem("addresses",JSON.stringify(next));
-  }
-  function delAddress(id){
-    const next = addresses.filter(x=>x.id!==id); setAddresses(next); localStorage.setItem("addresses",JSON.stringify(next));
-  }
-  function makeDefault(id){
-    const next = addresses.map(x=> ({...x, def: x.id===id})); setAddresses(next); localStorage.setItem("addresses",JSON.stringify(next));
-  }
-
-  // KYC kaydet
-  async function saveKyc(e){
-    e?.preventDefault?.();
-    localStorage.setItem("kyc", JSON.stringify(kyc));
-    try{ await user?.update({ unsafeMetadata:{...((user?.unsafeMetadata)||{}), kycStatus: kyc.status||"pending" } }); }catch{}
-    alert("KYC kaydedildi (demo)");
-  }
-
-  // Mağaza bilgisi kaydet
-  function saveStore(){ localStorage.setItem("store_info", JSON.stringify(storeInfo)); alert("Mağaza bilgisi kaydedildi (demo)"); }
-
-  // Review sheet (basit demo)
-  const [rv,setRv]=useState({ open:false, orderId:"", rating:5, text:"" });
-  function openReview(id){ setRv({ open:true, orderId:id, rating:5, text:"" }); }
-  function sendReview(){ alert("Yorum gönderildi (moderasyon) – demo"); setRv({ open:false, orderId:"", rating:5, text:"" }); }
-
-  if(!isLoaded || !userLoaded) return <div style={{padding:20}}>Yükleniyor…</div>;
-
+  /* ======================= UI ======================= */
   return (
     <div className="wrap">
-      <header className="head">
-        <div className="avatarBox">
-          <img src={user?.imageUrl||"/assets/images/logo.png"} alt="avatar"/>
-        </div>
-        <div className="info">
-          <div className="role">{role==="seller"?t.roleSeller:t.roleCustomer}</div>
-          <h1 className="ttl">{t.profile}</h1>
-          <div className="grid2">
-            <div className="row"><label>{t.fullName}</label><div>{[user?.firstName,user?.lastName].filter(Boolean).join(" ")||user?.username||"—"}</div></div>
-            <div className="row"><label>{t.email}</label><div>{user?.primaryEmailAddress?.emailAddress||"—"}</div></div>
+      <SignedOut><p>Yönlendiriliyor…</p></SignedOut>
+      <SignedIn>
+        {/* Üst başlık */}
+        <header className="header">
+          <div className="idbox">
+            <img className="avatar" src={user?.imageUrl||"/assets/images/logo.png"} alt="avatar"/>
+            <div>
+              <h1 className="ttl">{t.pageTitle} <small className="chip">{role==="seller"?t.roleSeller:t.roleCustomer}</small></h1>
+              <div className="meta"><b>{t.fullName}:</b> {form.fullName||"—"} · <b>{t.email}:</b> {user?.primaryEmailAddress?.emailAddress||"—"}</div>
+            </div>
           </div>
           <div className="actions">
-            <button className="btn" onClick={()=>setSettingsOpen(true)}>⚙️ {t.settings}</button>
-            <a className="btn ghost" href="/logout?next=/home.html">🚪 {t.logout}</a>
+            <button className="btn" onClick={openSettings}>⚙️ {t.settings}</button>
+            <a className="btn ghost" href="/logout?next=/">⇦ {t.logout}</a>
           </div>
-        </div>
-      </header>
+        </header>
+        {msg && <div className="msg">{msg}</div>}
 
-      <main className="body">
-        {/* Sol sütun */}
-        <section className="colL">
-          {/* Cüzdan (satıcıda görünür) */}
-          {role==="seller" && (
-            <div className="card">
+        {/* Satıcı Paneli */}
+        {role==="seller" && (
+          <section className="grid2">
+            {/* Mağaza */}
+            <article className="card">
+              <h3>🏪 {t.store}</h3>
+              <div className="row">
+                <label className="lab">
+                  <span>{t.cover}</span>
+                  <input type="text" value={storeForm.coverUrl} onChange={e=>setStoreForm({...storeForm, coverUrl:e.target.value})} placeholder="https://…" disabled={!isAdmin}/>
+                  {!isAdmin && <small style={{opacity:.75}}>Bu alan sadece admin tarafından yönetilir.</small>}
+                </label>
+                <label className="lab">
+                  <span>{t.storeAbout}</span>
+                  <textarea rows={3} value={storeForm.about} onChange={e=>setStoreForm({...storeForm, about:e.target.value})} placeholder="{t.storeAbout}"/>
+                </label>
+                <div className="lab rowline">
+                  <label className="chk"><input type="checkbox" checked={storeForm.fast} onChange={e=>setStoreForm({...storeForm, fast:e.target.checked})}/> {t.fastShip}</label>
+                  <label className="chk"><input type="checkbox" checked={storeForm.vacation} onChange={e=>setStoreForm({...storeForm, vacation:e.target.checked})}/> {t.vacation}</label>
+                </div>
+                <div>
+                  <button className="btn dark" onClick={saveStore}>{t.save}</button>
+                </div>
+              </div>
+            </article>
+
+            {/* KYC */}
+            <article className="card">
+              <h3>🪪 {t.kyc}</h3>
+              <div className="grid">
+                <label className="lab"><span>{t.idnum}</span><input value={kyc.idnum} onChange={e=>setKyc({...kyc,idnum:e.target.value})}/></label>
+                <label className="lab"><span>{t.iban}</span><input value={kyc.iban} onChange={e=>setKyc({...kyc,iban:e.target.value})}/></label>
+                <label className="lab"><span>{t.taxOffice}</span><input value={kyc.tax} onChange={e=>setKyc({...kyc,tax:e.target.value})}/></label>
+                <label className="lab"><span>{t.address}</span><input value={kyc.addr} onChange={e=>setKyc({...kyc,addr:e.target.value})}/></label>
+                <div className="lab"><span>{t.kycStatus}</span><b className="chip">{t[kyc.status]||t.pending}</b></div>
+                <div><button className="btn" onClick={sendKyc}>{t.sendForApproval}</button></div>
+              </div>
+            </article>
+
+            {/* Cüzdan */}
+            <article className="card">
               <h3>💼 {t.wallet}</h3>
               <div className="wallet">
-                <div className="wItem"><span>{t.walletHeld}</span><b>{PRICE(wallet.held)}</b></div>
-                <div className="wItem"><span>{t.walletAvailable}</span><b>{PRICE(wallet.available)}</b></div>
-                <div className="wItem"><span>{t.walletPaid}</span><b>{PRICE(wallet.paid)}</b></div>
+                <div className="wbox"><span>{t.escrow}</span><b>₺{wallet.escrow.toLocaleString("tr-TR",{minimumFractionDigits:2})}</b></div>
+                <div className="wbox"><span>{t.withdrawable}</span><b>₺{wallet.withdrawable.toLocaleString("tr-TR",{minimumFractionDigits:2})}</b></div>
+                <div className="wbox"><span>{t.paidOut}</span><b>₺{wallet.paidOut.toLocaleString("tr-TR",{minimumFractionDigits:2})}</b></div>
               </div>
-            </div>
-          )}
+            </article>
 
-          {/* Siparişler */}
-          <div className="card">
-            <h3>📦 {t.orders}</h3>
-            {(!orders||orders.length===0) && <p>{t.ordersEmpty}</p>}
-            <div className="orders">
-              {orders.map(o=> (
-                <article key={o.id} className={`order ${o.status}`}>
-                  <div className="oTop">
-                    <div className="oTitle">{o.title}</div>
-                    <div className="oAmt">{PRICE(o.amount)}</div>
+            {/* Siparişler (Satıcı) */}
+            <article className="card span2">
+              <h3>📦 {t.orders}</h3>
+              <OrderList items={orders} t={t} role="seller" onPreparing={doPreparing} onShipped={doShipped} onDelivered={doDelivered} />
+            </article>
+
+            {/* İlanlar */}
+            <article className="card span2">
+              <h3>🗂️ {t.listings}</h3>
+              <ListingTabs t={t} data={listings} onExtend={(id)=>alert("extend "+id)} onRemove={(id)=>alert("remove "+id)} />
+            </article>
+          </section>
+        )}
+
+        {/* Müşteri Paneli */}
+        {role==="customer" && (
+          <section className="grid1">
+            <article className="card">
+              <h3>📦 {t.myOrders}</h3>
+              <OrderList items={orders} t={t} role="customer" canReview={canReview} onOpenReview={(o)=>{ setRvOrder(o); setRvOpen(true); }} onConfirm={(id)=>doDelivered(id)} />
+            </article>
+
+            {/* Adres defteri (basit link) */}
+            <article className="card">
+              <h3>📮 {"Adres Defteri"}</h3>
+              <div className="row">
+                <a className="btn" href="/profile/addresses">➕ Adres Ekle</a>
+              </div>
+            </article>
+          </section>
+        )}
+
+        {/* Yorum Sheet */}
+        {rvOpen && (
+          <div className="sheet" role="dialog" aria-modal="true">
+            <div className="sheetCard">
+              <div className="sheetHead"><b>{t.writeReview}</b><button className="btn ghost" onClick={()=>setRvOpen(false)}>✕</button></div>
+              <div className="grid">
+                <div>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <span>{t.rating}:</span>
+                    {[0,1,2,3,4].map(i=> (
+                      <button key={i} className={i<rvStars?"star on":"star"} onClick={()=>setRvStars(i+1)} aria-label={`star-${i+1}`}>★</button>
+                    ))}
                   </div>
-                  <div className="oMeta">
-                    <span>#{o.id}</span>
-                    <span>{new Date(o.date).toLocaleDateString("tr-TR")}</span>
-                    <span className={`badge s_${o.status}`}>{statusLabel(o.status,t)}</span>
-                  </div>
-                  <div className="oBtns">
-                    {role==="seller" ? (
-                      <>
-                        {o.status==="paid" && <button className="sm" onClick={()=>orderAction(o.id,"markPreparing")}>{t.markPreparing}</button>}
-                        {(o.status==="paid"||o.status==="preparing") && (
-                          <button className="sm" onClick={()=>{
-                            const trackingNo = prompt(`${t.trackingNo}:`, o.track||"")||"";
-                            const carrier = prompt(`${t.carrier}:`, o.carrier||"")||"";
-                            if(!trackingNo) return alert("Takip no gerekli");
-                            orderAction(o.id,"markShipped",{ trackingNo, carrier });
-                          }}>{t.markShipped}</button>
-                        )}
-                        {o.status==="shipped" && (
-                          <button className="sm" onClick={()=>orderAction(o.id,"markDelivered")}>{t.markDelivered}</button>
-                        )}
-                        {o.track && <a className="sm ghost" target="_blank" rel="noreferrer" href={carrierLink(o.carrier,o.track)}>{t.track}</a>}
-                      </>
-                    ) : (
-                      <>
-                        {o.status==="shipped" && <a className="sm ghost" target="_blank" rel="noreferrer" href={carrierLink(o.carrier,o.track)}>{t.track}</a>}
-                        {o.status==="delivered" && <button className="sm" onClick={()=>openReview(o.id)}>{t.writeReview}</button>}
-                        {o.status==="paid"||o.status==="preparing" ? (
-                          <button className="sm warn" onClick={()=>orderAction(o.id,"refund",{reason:"iptal talebi"})}>{t.refund}</button>
-                        ) : null}
-                        {o.status==="delivered" && (
-                          <button className="sm" onClick={()=>orderAction(o.id,"markDelivered")}>{t.confirmDelivery}</button>
-                        )}
-                        <button className="sm ghost" onClick={()=>alert("Tekrar sipariş (demo)")}>{t.reorder}</button>
-                      </>
-                    )}
-                  </div>
-                </article>
-              ))}
+                </div>
+                <label className="lab"><span>{t.comment}</span>
+                  <textarea rows={4} value={rvText} onChange={e=>setRvText(e.target.value)} placeholder=""/>
+                </label>
+                <div className="row end">
+                  <button className="btn" onClick={()=>setRvOpen(false)}>{t.cancel}</button>
+                  <button className="btn dark" onClick={submitReview}>{t.submit}</button>
+                </div>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Yorum sheet */}
-          {rv.open && (
-            <div className="sheet" role="dialog" aria-modal="true">
-              <div className="sheetCard">
-                <div className="sheetHead"><b>⭐ {t.writeReview}</b><button className="btn ghost" onClick={()=>setRv(v=>({...v,open:false}))}>✕</button></div>
-                <div className="sheetBody">
-                  <label className="lab"><span>{t.rating}</span>
-                    <input type="number" min={1} max={5} value={rv.rating} onChange={e=>setRv(v=>({...v,rating:Number(e.target.value||5)}))}/>
-                  </label>
-                  <label className="lab"><span>Metin</span>
-                    <textarea value={rv.text} onChange={e=>setRv(v=>({...v,text:e.target.value}))} placeholder={t.reviewNote}/>
-                  </label>
-                  <div className="row end">
-                    <button className="btn" onClick={sendReview}>{t.send}</button>
-                  </div>
+        {/* Ayarlar Sheet */}
+        {settingsOpen && (
+          <div className="sheet" role="dialog" aria-modal="true">
+            <div className="sheetCard">
+              <div className="sheetHead"><b>⚙️ {t.profileSettings}</b><button className="btn ghost" onClick={closeSettings}>✕</button></div>
+              <form className="grid" onSubmit={saveSettings}>
+                <label className="lab"><span>{t.fullName}</span><input value={form.fullName} onChange={e=>setForm({...form, fullName:e.target.value})}/></label>
+                <label className="lab"><span>{t.username}</span><input value={form.username} onChange={e=>setForm({...form, username:e.target.value})}/></label>
+                <label className="lab"><span>{t.province}</span><input value={form.il} onChange={e=>setForm({...form, il:e.target.value})}/></label>
+                <label className="lab"><span>{t.district}</span><input value={form.ilce} onChange={e=>setForm({...form, ilce:e.target.value})}/></label>
+                <div className="lab">
+                  <span>{t.upload}</span>
+                  <input type="file" accept="image/*" onChange={onAvatarChange}/>
                 </div>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Sağ sütun */}
-        <aside className="colR">
-          {role==="seller" && (
-            <div className="card">
-              <h3>🏪 {t.store}</h3>
-              <div className="lab"><span>{t.storeCover}</span>
-                <input type="file" accept="image/*" onChange={e=>{
-                  const f=e.target.files?.[0]; if(!f) return; const url=URL.createObjectURL(f);
-                  setStoreInfo(s=>({...s,cover:url}));
-                }}/>
-                {storeInfo.cover && <img src={storeInfo.cover} alt="cover" className="cover"/>}
-              </div>
-              <div className="lab"><span>{t.storeAbout}</span>
-                <textarea value={storeInfo.about} onChange={e=>setStoreInfo(s=>({...s,about:e.target.value}))} placeholder="Mağaza açıklaması"/>
-              </div>
-              <div className="lab"><span>{t.badges}</span>
-                <input value={storeInfo.badges.join(", ")} onChange={e=>setStoreInfo(s=>({...s,badges:e.target.value.split(",").map(x=>x.trim()).filter(Boolean)}))}/>
-              </div>
-              <div className="lab row">
-                <label><input type="checkbox" checked={storeInfo.vacation} onChange={e=>setStoreInfo(s=>({...s,vacation:e.target.checked}))}/> {t.vacation}</label>
-                {storeInfo.vacation && (
-                  <>
-                    <label>{t.from} <input type="date" value={storeInfo.from} onChange={e=>setStoreInfo(s=>({...s,from:e.target.value}))}/></label>
-                    <label>{t.until} <input type="date" value={storeInfo.until} onChange={e=>setStoreInfo(s=>({...s,until:e.target.value}))}/></label>
-                  </>
-                )}
-              </div>
-              <div className="row end"><button className="btn" onClick={saveStore}>{t.save}</button></div>
-            </div>
-          )}
-
-          {/* KYC */}
-          {role==="seller" && (
-            <div className="card">
-              <h3>🪪 {t.kyc}</h3>
-              <p className="muted">{t.kycWarn}</p>
-              <form onSubmit={saveKyc} className="grid">
-                <label className="lab"><span>{t.tckn}</span><input value={kyc.tckn} onChange={e=>setKyc(v=>({...v,tckn:e.target.value}))}/></label>
-                <label className="lab"><span>{t.iban}</span><input value={kyc.iban} onChange={e=>setKyc(v=>({...v,iban:e.target.value}))}/></label>
-                <label className="lab"><span>{t.taxOffice}</span><input value={kyc.taxOffice} onChange={e=>setKyc(v=>({...v,taxOffice:e.target.value}))}/></label>
-                <label className="lab"><span>{t.address}</span><textarea value={kyc.address} onChange={e=>setKyc(v=>({...v,address:e.target.value}))}/></label>
-                <div className="lab"><span>{t.kycStatus}</span>
-                  <select value={kyc.status} onChange={e=>setKyc(v=>({...v,status:e.target.value}))}>
-                    <option value="pending">{t.statusPending}</option>
-                    <option value="approved">{t.statusApproved}</option>
-                    <option value="rejected">{t.statusRejected}</option>
-                  </select>
+                <a className="link" href="/user/profile/security" target="_blank" rel="noreferrer">➡️ {t.changePwd} / {t.goSecurity}</a>
+                <div className="row end">
+                  <button type="button" className="btn" onClick={closeSettings}>{t.cancel}</button>
+                  <button className="btn dark" disabled={busy}>{busy?"…":t.save}</button>
                 </div>
-                <div className="row end"><button className="btn" type="submit">{t.sendForReview}</button></div>
               </form>
             </div>
-          )}
-
-          {/* Adres Defteri – müşteri ağırlıklı */}
-          <div className="card">
-            <h3>📮 {t.addresses}</h3>
-            <div className="row end"><button className="btn" onClick={addAddress}>➕ {t.addAddress}</button></div>
-            <div className="addrList">
-              {addresses.map(a=> (
-                <div key={a.id} className="addr">
-                  <div className="row spread">
-                    <b>{a.name||"—"}</b>
-                    {a.def && <span className="chip">{t.default}</span>}
-                  </div>
-                  <div className="muted small">{[a.line,a.city,a.district,a.zip].filter(Boolean).join(", ")||"—"}</div>
-                  <div className="muted small">{t.invoiceInfo}: {a.invoice||"—"}</div>
-                  <div className="row gap">
-                    <button className="sm" onClick={()=>updAddress(a.id,{ name: prompt(t.name, a.name||"")||a.name })}>{t.edit}</button>
-                    <button className="sm" onClick={()=>updAddress(a.id,{ line: prompt(t.line, a.line||"")||a.line })}>{t.update}</button>
-                    {!a.def && <button className="sm" onClick={()=>makeDefault(a.id)}>{t.setDefault}</button>}
-                    <button className="sm warn" onClick={()=>delAddress(a.id)}>{t.delete}</button>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
+        )}
 
-          {/* Bildirim tercihleri */}
-          <div className="card">
-            <h3>🔔 {t.notifications}</h3>
-            <div className="row gap">
-              <label><input type="checkbox" checked={notif.email} onChange={e=>setNotif(n=>({...n,email:e.target.checked}))}/> {t.notifEmail}</label>
-              <label><input type="checkbox" checked={notif.whats} onChange={e=>setNotif(n=>({...n,whats:e.target.checked}))}/> {t.notifWhats}</label>
-              <label><input type="checkbox" checked={notif.push} onChange={e=>setNotif(n=>({...n,push:e.target.checked}))}/> {t.notifPush}</label>
-            </div>
+        {/* Alt Bar (sabit) */}
+        <nav className="bottombar">
+          <button className="iconbtn" onClick={()=>router.push("/home.html")}>
+            🏠<span>{t.home}</span>
+          </button>
+          <button className="iconbtn" onClick={()=>router.push("/messages")}>
+            💬<span>{t.messages}</span>
+          </button>
+          <button className="iconbtn" onClick={()=>router.push("/notifications")}>
+            🔔<span>{t.noti}</span>
+          </button>
+        </nav>
+
+        {/* Siyah Legal Footer (en altta, full genişlik) */}
+        <footer className="legalbar">
+          <div className="legrow">
+            <strong>{t.corp}</strong>
+            <a href="/legal/hakkimizda">{t.about}</a>
+            <a href="/legal/iletisim">{t.contact}</a>
+            <a href="/legal/gizlilik">{t.privacy}</a>
+            <a href="/legal/kvkk-aydinlatma">{t.kvkk}</a>
+            <a href="/legal/kullanim-sartlari">{t.terms}</a>
+            <a href="/legal/mesafeli-satis-sozlesmesi">{t.distance}</a>
+            <a href="/legal/teslimat-iade">{t.returns}</a>
+            <a href="/legal/cerez-politikasi">{t.cookies}</a>
+            <a href="/legal/topluluk-kurallari">{t.banned}</a>
+            <a href="/legal">{t.allLegal}</a>
+            <a href="/home.html">{t.homepage}</a>
+            <span className="copy">{t.copyright}</span>
           </div>
-        </aside>
-      </main>
+        </footer>
 
-      {/* Ayarlar Sheet */}
-      {settingsOpen && (
-        <div className="sheet" role="dialog" aria-modal="true">
-          <div className="sheetCard">
-            <div className="sheetHead"><b>⚙️ {t.settings}</b><button className="btn ghost" onClick={()=>setSettingsOpen(false)}>✕</button></div>
-            <div className="sheetBody grid">
-              <a className="link" href="/user/profile/security" target="_blank" rel="noreferrer">🔒 {t.changePwd}</a>
-              <div className="muted small">Dil seçimi: home.html sağ üstten – bu sayfa localStorage('lang') kullanır.</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Alt gezinme (mobil) */}
-      <nav className="bottombar">
-        <div className="mini"><button className="iconbtn" onClick={()=>router.push("/home.html")}>🏠</button><span>{t.home}</span></div>
-        <div className="mini"><button className="iconbtn" onClick={()=>router.push("/messages")}>💬</button><span>Mesajlar</span></div>
-        <div className="mini"><button className="iconbtn" onClick={()=>router.push("/notifications")}>🔔</button><span>Bildirimler</span></div>
-      </nav>
-
-      {/* SİYAH LEGAL PANEL (tek) */}
-      <footer className="legal">
-        <div className="col">
-          <h4>{t.footerHead1}</h4>
-          <a href="/legal/hakkimizda">{t.about}</a>
-          <a href="/legal/iletisim">{t.contact}</a>
-          <a href="/legal/gizlilik">{t.privacy}</a>
-          <a href="/legal/kvkk-aydinlatma">{t.kvkk}</a>
-        </div>
-        <div className="col">
-          <h4>{t.footerHead2}</h4>
-          <a href="/legal/kullanim-sartlari">{t.terms}</a>
-          <a href="/legal/mesafeli-satis-sozlesmesi">{t.distance}</a>
-          <a href="/legal/teslimat-iade">{t.returns}</a>
-          <a href="/legal/cerez-politikasi">{t.cookies}</a>
-        </div>
-        <div className="col">
-          <h4>{t.footerHead3}</h4>
-          <a href="/legal/yasakli-urunler">{t.banned}</a>
-          <a href="/legal">{t.allLegal}</a>
-          <a href="/home.html">{t.home}</a>
-        </div>
-        <div className="copy">{t.rights}</div>
-      </footer>
+      </SignedIn>
 
       <style jsx>{`
-        .wrap{min-height:100vh; padding-bottom:120px; background:
-          radial-gradient(1000px 700px at -10% -10%, rgba(255,255,255,.35), transparent 60%),
-          linear-gradient(120deg,#ff80ab,#a78bfa,#60a5fa,#34d399); background-size:320% 320%; animation:drift 16s ease-in-out infinite}
-        @keyframes drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        .wrap{ min-height:100vh; padding: 12px 12px calc(64px + 56px + 20px); /* bottom nav + legal + gap */ }
+        .header{ max-width:1100px; margin:10px auto; display:flex; align-items:center; justify-content:space-between; gap:12px }
+        .idbox{ display:flex; gap:12px; align-items:center }
+        .avatar{ width:64px; height:64px; border-radius:999px; object-fit:cover; }
+        .ttl{ margin:0; font-size:22px }
+        .chip{ background:#111827; color:#fff; padding:2px 8px; border-radius:999px; font-size:12px; margin-left:6px }
+        .meta{ font-size:13px; color:#475569 }
+        .actions{ display:flex; gap:8px }
+        .btn{ border:1px solid #e5e7eb; background:#fff; border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer }
+        .btn.dark{ background:#111827; border-color:#111827; color:#fff }
+        .btn.ghost{ background:#fff }
+        .msg{ max-width:1100px; margin:0 auto 10px; padding:6px 10px; background:#f1f5f9; border:1px solid #e5e7eb; border-radius:10px; font-size:13px }
 
-        .head{max-width:1100px; margin:16px auto; display:grid; grid-template-columns:120px 1fr; gap:16px;
-          background:rgba(255,255,255,.88); border:1px solid rgba(255,255,255,.5); border-radius:18px; padding:14px; backdrop-filter:blur(10px)}
-        @media (max-width:760px){ .head{grid-template-columns:1fr} }
-        .avatarBox img{width:110px; height:110px; border-radius:999px; object-fit:cover; background:#f1f5f9; border:2px solid #e5e7eb}
-        .ttl{margin:0 0 6px}
-        .role{font-weight:800; font-size:12px; color:#111827; opacity:.8}
-        .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-        .row{display:flex; align-items:center; gap:8px}
-        .row.spread{justify-content:space-between}
-        .row.end{justify-content:flex-end}
-        .row.gap{gap:8px}
-        .row label{font-weight:700}
-        .actions{display:flex; gap:8px; margin-top:8px}
-        .btn{border:1px solid #e5e7eb; background:#111827; color:#fff; border-radius:12px; padding:9px 12px; font-weight:800; cursor:pointer}
-        .btn.ghost{background:#fff; color:#111827}
+        .grid1{ max-width:1100px; margin:10px auto; display:grid; gap:12px; grid-template-columns:1fr }
+        .grid2{ max-width:1100px; margin:10px auto; display:grid; gap:12px; grid-template-columns:repeat(2,1fr) }
+        .span2{ grid-column:1/-1 }
+        @media (max-width:900px){ .grid2{ grid-template-columns:1fr } }
 
-        .body{max-width:1100px; margin:12px auto 0; display:grid; grid-template-columns:2fr 1fr; gap:16px}
-        @media (max-width:960px){ .body{grid-template-columns:1fr} }
-        .card{background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:12px}
-        .muted{color:#475569}
-        .small{font-size:12px}
+        .card{ background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:12px }
+        .lab{ display:grid; gap:6px; margin-bottom:8px }
+        input, textarea, select{ padding:9px 12px; border:1px solid #e5e7eb; border-radius:10px; font-size:14px; outline:none }
+        .row{ display:grid; gap:8px }
+        .rowline{ display:flex; gap:12px; align-items:center }
+        .chk{ display:flex; gap:6px; align-items:center }
+        .wallet{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px }
+        .wbox{ border:1px dashed #e5e7eb; border-radius:12px; padding:10px; display:grid }
+        .wbox span{ color:#475569; font-size:12px }
+        .wbox b{ font-size:18px }
 
-        .wallet{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
-        .wItem{background:#0f172a; color:#fff; padding:12px; border-radius:12px; display:grid}
-        .wItem span{opacity:.8}
-        .wItem b{font-size:18px}
+        .list{ display:grid; gap:8px }
+        .item{ border:1px solid #e5e7eb; border-radius:10px; padding:10px; display:grid; gap:6px }
+        .rowbtns{ display:flex; gap:8px; flex-wrap:wrap }
 
-        .orders{display:grid; gap:10px}
-        .order{border:1px solid #e5e7eb; border-radius:14px; padding:10px; background:#fff}
-        .oTop{display:flex; justify-content:space-between; gap:10px}
-        .oTitle{font-weight:800}
-        .oAmt{font-weight:900}
-        .oMeta{display:flex; gap:10px; align-items:center; color:#475569; font-size:12px; margin:6px 0}
-        .oBtns{display:flex; gap:8px; flex-wrap:wrap}
-        .sm{border:1px solid #111827; background:#111827; color:#fff; border-radius:10px; padding:6px 10px; font-weight:800; cursor:pointer}
-        .sm.ghost{background:#fff; color:#111827}
-        .sm.warn{background:#ef4444; border-color:#ef4444}
-        .badge{padding:3px 8px; border-radius:999px; background:#111827; color:#fff; font-size:11px}
-        .s_paid{background:#1f2937}
-        .s_preparing{background:#4b5563}
-        .s_shipped{background:#2563eb}
-        .s_delivered{background:#16a34a}
-        .s_released{background:#0f766e}
-        .s_refunded{background:#ef4444}
-        .s_canceled{background:#6b7280}
+        /* Sheet */
+        .sheet{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:grid; place-items:end center; padding:16px; z-index:60 }
+        .sheetCard{ width:100%; max-width:640px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden }
+        .sheetHead{ display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-bottom:1px solid #e5e7eb }
+        .grid{ display:grid; gap:10px; padding:12px }
+        .link{ font-weight:800; text-decoration:none; color:#111827 }
+        .row.end{ justify-content:flex-end; display:flex; gap:8px }
+        .star{ border:none; background:transparent; font-size:20px; cursor:pointer; opacity:.35 }
+        .star.on{ opacity:1 }
 
-        .lab{display:grid; gap:6px; margin:10px 0}
-        .lab input, .lab textarea, .lab select{padding:9px 12px; border:1px solid #e5e7eb; border-radius:10px; font-size:14px}
-        .cover{width:100%; border-radius:12px; border:1px solid #e5e7eb; margin-top:8px}
-        .addrList{display:grid; gap:10px}
-        .addr{border:1px solid #e5e7eb; border-radius:12px; padding:10px}
-        .chip{background:#111827; color:#fff; border-radius:999px; padding:2px 8px; font-size:11px}
+        /* Alt bar */
+        .bottombar{ position:fixed; left:0; right:0; bottom:56px; z-index:40; height:64px; display:flex; justify-content:space-around; align-items:center; background:rgba(255,255,255,.96); border-top:1px solid #e5e7eb; backdrop-filter:blur(8px) }
+        .iconbtn{ display:grid; place-items:center; gap:4px; border:none; background:transparent; font-weight:700; cursor:pointer }
+        .iconbtn span{ font-size:12px }
 
-        .sheet{position:fixed; inset:0; background:rgba(0,0,0,.35); display:grid; place-items:center; padding:18px; z-index:50}
-        .sheetCard{width:100%; max-width:560px; background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden}
-        .sheetHead{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid #e5e7eb}
-        .sheetBody{padding:12px}
-        .grid{display:grid; gap:10px}
-        .link{font-weight:800; color:#111827; text-decoration:none}
-
-        .bottombar{position:fixed; left:0; right:0; bottom:64px; display:flex; justify-content:space-around; gap:8px; padding:10px;
-          background:rgba(255,255,255,.92); border-top:1px solid #e5e7eb; backdrop-filter:blur(10px); z-index:20}
-        .iconbtn{width:42px; height:42px; border:1px solid #e5e7eb; background:#fff; border-radius:12px; cursor:pointer}
-        .mini{display:grid; place-items:center; gap:4px; font-size:12px}
-
-        .legal{position:fixed; left:0; right:0; bottom:0; background:#0b0b0c; color:#d1d5db; padding:14px 16px; display:grid; grid-template-columns:repeat(3,1fr); gap:16px; border-top:2px solid #111}
-        @media (max-width:860px){ .legal{grid-template-columns:1fr 1fr} }
-        @media (max-width:540px){ .legal{grid-template-columns:1fr} }
-        .legal h4{margin:0 0 8px; color:#fff}
-        .legal a{display:block; color:#d1d5db; text-decoration:none; padding:3px 0}
-        .legal .copy{grid-column:1/-1; text-align:center; color:#9ca3af; font-size:12px; margin-top:6px}
+        /* Siyah legal footer en altta */
+        .legalbar{ position:fixed; left:0; right:0; bottom:0; z-index:30; background:#0b0b0b; color:#f1f5f9; padding:8px 10px }
+        .legrow{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center }
+        .legalbar a{ color:#fefefe; text-decoration:none; font-weight:700 }
+        .copy{ opacity:.8; margin-left:6px }
       `}</style>
     </div>
   );
 }
 
-function statusLabel(s,t){
-  return s==="paid"?t.oPaid: s==="preparing"?t.oPreparing: s==="shipped"?t.oShipped: s==="delivered"?t.oDelivered:
-    s==="released"?t.oReleased: s==="refunded"?t.oRefunded: s==="canceled"?t.oCanceled: s;
+/* ======================= Alt Bileşenler ======================= */
+function OrderList({ items, t, role, onPreparing, onShipped, onDelivered, canReview, onOpenReview, onConfirm }){
+  if(!items || !items.length){ return <p style={{margin:0, color:'#475569'}}>{t.noData}</p>; }
+  return (
+    <div className="list">
+      {items.map((o,idx)=>{
+        const status=o.status||"";
+        return (
+          <div key={idx} className="item">
+            <div style={{display:'flex',justifyContent:'space-between',gap:10,flexWrap:'wrap'}}>
+              <b>{o.title||o.items?.[0]?.title||'Ürün'}</b>
+              <span style={{opacity:.8}}>{o.code||o.id||''} · {o.date||''}</span>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',gap:10,flexWrap:'wrap'}}>
+              <span>₺{(o.amount||0).toLocaleString('tr-TR',{minimumFractionDigits:2})}</span>
+              <span className="chip">{t[status]||status}</span>
+            </div>
+            <div className="rowbtns">
+              {role==="seller" && (
+                <>
+                  <button className="btn" onClick={()=>onPreparing?.(o.id)}>{t.markPreparing}</button>
+                  <button className="btn" onClick={()=>onShipped?.(o.id)}>{t.markShipped}</button>
+                  <button className="btn" onClick={()=>onDelivered?.(o.id)}>{t.markDelivered}</button>
+                  {o.trackingNo && <a className="btn ghost" href={`https://www.google.com/search?q=${encodeURIComponent(o.trackingNo)}`} target="_blank" rel="noreferrer">{t.trackCargo}</a>}
+                  <button className="btn ghost">{t.problem}</button>
+                </>
+              )}
+              {role==="customer" && (
+                <>
+                  <button className="btn">{t.view}</button>
+                  {o.trackingNo && <a className="btn ghost" href={`https://www.google.com/search?q=${encodeURIComponent(o.trackingNo)}`} target="_blank" rel="noreferrer">{t.trackCargo}</a>}
+                  {typeof canReview==="function" && canReview(o) && <button className="btn" onClick={()=>onOpenReview?.(o)}>{t.writeReview}</button>}
+                  {o.status!=="delivered" && <button className="btn dark" onClick={()=>onConfirm?.(o.id)}>{t.confirmReceived}</button>}
+                  <button className="btn ghost">{t.return}</button>
+                  <button className="btn ghost">{t.reorder}</button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-function carrierLink(carrier,track){
-  const num = encodeURIComponent(track||"");
-  const c = (carrier||"").toLowerCase();
-  if(c.includes("ptt")) return `https://gonderitakip.ptt.gov.tr/Track/Verify?q=${num}`;
-  if(c.includes("yurti")) return `https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=${num}`;
-  if(c.includes("aras")) return `https://kargotakip.araskargo.com.tr/mainpage.aspx?code=${num}`;
-  return `https://google.com/search?q=${num}`;
+function ListingTabs({ t, data, onExtend, onRemove }){
+  const tabs = [
+    {key:'pending', ttl:t.waitApproval},
+    {key:'live', ttl:t.live},
+    {key:'expired', ttl:t.expired},
+    {key:'rejected', ttl:t.rejectedTab},
+  ];
+  const [tab,setTab] = useState('pending');
+  const items = data[tab]||[];
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
+        {tabs.map(x=> (
+          <button key={x.key} className={tab===x.key?"btn dark":"btn"} onClick={()=>setTab(x.key)}>{x.ttl}</button>
+        ))}
+      </div>
+      {!items.length ? (
+        <p style={{margin:0, color:'#475569'}}>{t.noData}</p>
+      ) : (
+        <div className="list">
+          {items.map((it,idx)=> (
+            <div key={idx} className="item">
+              <div style={{display:'flex',justifyContent:'space-between',gap:10,flexWrap:'wrap'}}>
+                <b>{it.title||'İlan'}</b>
+                <span style={{opacity:.8}}>{it.code||it.id||''}</span>
+              </div>
+              <div className="rowbtns">
+                {tab==='expired' && <button className="btn" onClick={()=>onExtend(it.id)}>{t.extend}</button>}
+                <button className="btn ghost" onClick={()=>onRemove(it.id)}>{t.remove}</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
