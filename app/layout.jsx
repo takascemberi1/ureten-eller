@@ -1,89 +1,66 @@
-'use client';
+// =========================================================
+<h4>Kurumsal</h4>
+<ul>
+<li><a href="/legal/hakkimizda">Hakkımızda</a></li>
+<li><a href="/legal/iletisim">İletişim</a></li>
+<li><a href="/legal/gizlilik">Gizlilik</a></li>
+<li><a href="/legal/kvkk-aydinlatma">KVKK Aydınlatma</a></li>
+<li><a href="/">Ana Sayfa</a></li>
+</ul>
+</section>
+<section>
+<h4>Gizlilik & Kullanım</h4>
+<ul>
+<li><a href="/legal/kullanim-sartlari">Kullanım Şartları</a></li>
+<li><a href="/legal/mesafeli-satis-sozlesmesi">Mesafeli Satış Sözleşmesi</a></li>
+<li><a href="/legal/teslimat-iade">Teslimat & İade</a></li>
+<li><a href="/legal/gizlilik#cerez">Çerez Yönetimi</a></li>
+</ul>
+</section>
+<section>
+<h4>Yardım</h4>
+<ul>
+<li><a href="/legal/gizlilik#haklar">Kullanıcı Hakları</a></li>
+<li><a href="/legal/kullanim-sartlari#yasaklar">Yasaklı Ürünler</a></li>
+<li><a href="/legal/iletisim">Destek</a></li>
+</ul>
+</section>
+</div>
+<div className="ue-wrap ue-bottom">
+<p>© {new Date().getFullYear()} Üreten Eller • Tüm hakları saklıdır.</p>
+</div>
+</footer>
 
-import { Suspense, useEffect, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-const SUP = ['tr','en','ar','de'];
-
-function useLang() {
-  const sp = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [lang, setLang] = useState('tr');
-
-  useEffect(() => {
-    const q = (sp.get('lang') || '').toLowerCase();
-    if (SUP.includes(q)) {
-      setLang(q);
-      document.cookie = `lang=${q}; path=/; max-age=${60*60*24*365}`;
-    } else {
-      // URL’de yoksa cookie’den tamamla
-      const ck = (document.cookie || '').split(';').map(s=>s.trim()).find(s=>s.startsWith('lang='));
-      const cv = ck ? ck.split('=')[1] : '';
-      const val = SUP.includes(cv) ? cv : 'tr';
-      const params = new URLSearchParams(sp.toString());
-      params.set('lang', val);
-      router.replace(`${pathname}?${params.toString()}`);
-      setLang(val);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sp, pathname]);
-
-  const change = (val) => {
-    const v = SUP.includes(val) ? val : 'tr';
-    const params = new URLSearchParams(sp.toString());
-    params.set('lang', v);
-    document.cookie = `lang=${v}; path=/; max-age=${60*60*24*365}`;
-    router.replace(`${pathname}?${params.toString()}`);
-    setLang(v);
-  };
-
-  return { lang, change };
+<style jsx global>{`
+:root{
+--ink:#0f172a;--muted:#475569;--paper:#ffffff;--bg:#f8fafc;
+--brand:#111827;--focus:#0ea5e9;--line:#e5e7eb;--footer:#0b0b0f
 }
-
-export default function LegalLayout({ children }) {
-  const { lang, change } = useLang();
-
-  return (
-    <div style={{
-      minHeight:'100vh',
-      background: `radial-gradient(1000px 700px at -10% -10%, rgba(255,255,255,.35), transparent 60%),
-                   linear-gradient(120deg,#ff80ab,#a78bfa,#60a5fa,#34d399)`,
-      backgroundSize:'320% 320%',
-      animation:'drift 16s ease-in-out infinite'
-    }}>
-      <style>{`
-        @keyframes drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-        .top{position:sticky;top:0;z-index:50;display:flex;gap:8px;align-items:center;padding:10px 14px;background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.08)}
-        .grow{flex:1}
-        .btn{border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:8px 12px;font-weight:700;cursor:pointer}
-        .card{max-width:1100px;margin:12px auto;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px}
-        .links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px auto 28px;max-width:1100px}
-        .links a{border:1px solid #e5e7eb;background:#fff;color:#111827;border-radius:999px;padding:8px 12px;font-weight:700;text-decoration:none}
-      `}</style>
-
-      <div className="top">
-        <div style={{display:'flex',alignItems:'center',gap:10,fontWeight:800}}>
-          <img src="/assets/images/logo.png" width={28} height={28} style={{borderRadius:8}} alt="logo"/>
-          <span>Üreten Eller</span>
-        </div>
-        <div className="grow"/>
-        <button className="btn" onClick={()=>location.href='/?lang='+lang}>🏠 <span>Home</span></button>
-        <div style={{display:'flex',alignItems:'center',gap:6,border:'1px solid #e5e7eb',background:'#fff',borderRadius:12,padding:'4px 8px'}}>
-          <span>🌐</span>
-          <select aria-label="Language" value={lang} onChange={e=>change(e.target.value)} style={{border:'none',background:'transparent',fontWeight:700,cursor:'pointer'}}>
-            <option value="tr">Türkçe</option>
-            <option value="en">English</option>
-            <option value="ar">العربية</option>
-            <option value="de">Deutsch</option>
-          </select>
-        </div>
-      </div>
-
-      {/* useSearchParams kullanan çocuklar için Suspense şart */}
-      <Suspense fallback={<div className="card">Loading…</div>}>
-        {children}
-      </Suspense>
-    </div>
-  );
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.ue-wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+.ue-topbar{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line)}
+.ue-topbar .ue-wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{font-weight:700;color:var(--brand);text-decoration:none}
+.ue-btn{display:inline-block;border:1px solid var(--line);padding:8px 12px;border-radius:10px;text-decoration:none;color:var(--brand)}
+.ue-btn:hover{border-color:var(--focus)}
+.ue-main{min-height:60vh}
+.ue-content{background:var(--paper);margin:18px auto;border:1px solid var(--line);border-radius:14px;padding:18px}
+.ue-content h1{margin:.2em 0 .4em}
+.ue-content h2{margin:1.2em 0 .6em}
+.ue-content h3{margin:1em 0 .5em}
+.ue-content p, .ue-content li{line-height:1.65}
+.ue-footer{background:var(--footer);color:#e5e7eb;margin-top:32px}
+.ue-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:28px 16px}
+.ue-footer h4{margin:0 0 8px 0;color:#fff}
+.ue-footer a{color:#d1d5db;text-decoration:none}
+.ue-footer a:hover{color:#fff}
+.ue-bottom{border-top:1px solid #232329;padding:12px 16px;display:flex;align-items:center;height:48px}
+@media (max-width:900px){.ue-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.ue-grid{grid-template-columns:1fr}.ue-content{padding:14px}}
+`}</style>
+</body>
+</html>
+);
 }
