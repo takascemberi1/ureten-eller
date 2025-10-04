@@ -1,0 +1,15 @@
+services:
+- type: web
+  name: ureten-eller
+  env: node
+  plan: starter
+  region: frankfurt
+  buildCommand: npm ci && npm run build
+  startCommand: next start -p $PORT
+  envVars:
+  - key: NODE_VERSION
+    value: 20
+  - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    sync: false
+  - key: CLERK_SECRET_KEY
+    sync: false
