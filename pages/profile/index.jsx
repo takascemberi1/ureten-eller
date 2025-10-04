@@ -1,4 +1,5 @@
 "use client";
+import KycNotice from "@/components/KycNotice";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useAuth, useUser, SignedIn, SignedOut } from "@clerk/nextjs";
@@ -320,12 +321,14 @@ export default function Profile(){
 
             {/* KYC */}
             <article className="card">
+    <KycNotice />
               <h3>🪪 {t.kyc}</h3>
               <div className="grid">
                 <label className="lab"><span>{t.idnum}</span><input value={kyc.idnum} onChange={e=>setKyc({...kyc,idnum:e.target.value})}/></label>
                 <label className="lab"><span>{t.iban}</span><input value={kyc.iban} onChange={e=>setKyc({...kyc,iban:e.target.value})}/></label>
                 <label className="lab"><span>{t.taxOffice}</span><input value={kyc.tax} onChange={e=>setKyc({...kyc,tax:e.target.value})}/></label>
                 <label className="lab"><span>{t.address}</span><input value={kyc.addr} onChange={e=>setKyc({...kyc,addr:e.target.value})}/></label>
+    <KycNotice />
                 <div className="lab"><span>{t.kycStatus}</span><b className="chip">{t[kyc.status]||t.pending}</b></div>
                 <div><button className="btn" onClick={sendKyc}>{t.sendForApproval}</button></div>
               </div>
