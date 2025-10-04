@@ -1,136 +1,111 @@
-// app/legal/layout.jsx — Tüm yasal sayfalara ortak çatı
-// Not: Bu segment bir "layout" olduğu için yalnızca bu klasör altındaki sayfaları sarar.
-// Root layout (app/layout.jsx) zaten <html>/<body> içerdiğinden burada sadece kapsayıcı döndürüyoruz.
+'use client'
 
-export default function LegalLayout({ children }) {
-  return (
-    <div style={styles.shell}>
-      <header style={styles.header}>
-        <div style={styles.container}>
-          <a href="/" style={styles.brand}>Üreten Eller</a>
-          <div style={{flex:1}} />
-          <LangLinks />
-        </div>
-      </header>
+// app/layout.jsx — Global app layout (legal sayfaları da buradan geçer)
+// Özellikler:
+// - Üstte basit bir dil seçici (TR/EN/AR/DE)
+// - Dil tercihini URL'de ?lang=xx olarak korur ve localStorage'a yazar
+// - RTL/LTR yönünü seçime göre <html dir> üzerinden ayarlar
+// - Mevcut query parametrelerini koruyarak sadece lang'i değiştirir
 
-      {/* Üst menü (hızlı erişim) */}
-      <nav style={styles.topnav}>
-        <div style={styles.container}>
-          <a href="/legal/hakkimizda" className="l">Hakkımızda</a>
-          <a href="/legal/iletisim" className="l">İletişim</a>
-          <a href="/legal/gizlilik" className="l">Gizlilik</a>
-          <a href="/legal/kvkk-aydinlatma" className="l">KVKK</a>
-          <a href="/legal/kullanim-sartlari" className="l">Kullanım Şartları</a>
-          <a href="/legal/mesafeli-satis-sozlesmesi" className="l">Mesafeli Satış</a>
-          <a href="/legal/teslimat-iade" className="l">Teslimat & İade</a>
-        </div>
-      </nav>
+import { useEffect, useMemo } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
-      <main style={styles.main}>
-        <div style={styles.container}>{children}</div>
-      </main>
+const SUP = ['tr','en','ar','de']
 
-      {/* Alt panel — Amazon/Sahibinden tarzı bölmeli footer (yalnız mevcut sayfalara link veriyoruz) */}
-      <footer style={styles.footer}>
-        <div style={styles.container}>
-          <div style={styles.grid}>
-            <section>
-              <h4 style={styles.h4}>Kurumsal</h4>
-              <ul style={styles.ul}>
-                <li><a href="/legal/hakkimizda">Hakkımızda</a></li>
-                <li><a href="/legal/iletisim">İletişim</a></li>
-                <li><a href="/legal/kullanim-sartlari">Kullanım Şartları</a></li>
-                <li><a href="/legal/gizlilik">Gizlilik Politikası</a></li>
-              </ul>
-            </section>
-            <section>
-              <h4 style={styles.h4}>Güven & Haklar</h4>
-              <ul style={styles.ul}>
-                <li><a href="/legal/kvkk-aydinlatma">KVKK Aydınlatma</a></li>
-                <li><a href="/legal/mesafeli-satis-sozlesmesi">Mesafeli Satış Sözleşmesi</a></li>
-                <li><a href="/legal/teslimat-iade">Teslimat & İade</a></li>
-                <li><a href="/legal/gizlilik#cookies">Çerezler</a></li>
-              </ul>
-            </section>
-            <section>
-              <h4 style={styles.h4}>Yardım</h4>
-              <ul style={styles.ul}>
-                <li><a href="/legal/iletisim#destek">Müşteri Hizmetleri</a></li>
-                <li><a href="/legal/teslimat-iade#iade">İade / Uyuşmazlık</a></li>
-                <li><a href="/legal/teslimat-iade#kargo">Kargo Takibi</a></li>
-              </ul>
-            </section>
-            <section>
-              <h4 style={styles.h4}>Diller</h4>
-              <ul style={styles.ul}>
-                <li><a href="?lang=tr">Türkçe</a></li>
-                <li><a href="?lang=en">English</a></li>
-                <li><a href="?lang=ar">العربية</a></li>
-                <li><a href="?lang=de">Deutsch</a></li>
-              </ul>
-            </section>
-          </div>
+function useLangFromUrl(){
+  const sp = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
 
-          <div style={styles.hr} />
+  // URL > localStorage > 'tr'
+  const lang = useMemo(() => {
+    const urlL = (sp.get('lang')||'').toLowerCase()
+    if (SUP.includes(urlL)) return urlL
+    if (typeof window !== 'undefined'){
+      const ls = (window.localStorage?.getItem('lang')||'').toLowerCase()
+      if (SUP.includes(ls)) return ls
+    }
+    return 'tr'
+  }, [sp])
 
-          <div style={styles.bottomRow}>
-            <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
-              {/* İstersen /public içine payments.png koyup buraya çekebiliriz */}
-              <img src="/assets/payments.png" alt="Ödeme kartları" height={22} style={{opacity:.9}}/>
-              <small style={{opacity:.8}}>© {new Date().getFullYear()} Üreten Eller • Tüm hakları saklıdır.</small>
-            </div>
-            <LangLinks compact/>
-          </div>
-        </div>
-      </footer>
+  // HTML lang/dir güncelle
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    document.documentElement.lang = lang
+    document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr'
+  }, [lang])
 
-      <style>{css}
-      </style>
-    </div>
-  );
+  // URL'de lang yoksa, mevcut diğer query'leri koruyup lang ekleyelim
+  useEffect(() => {
+    const urlL = (sp.get('lang')||'').toLowerCase()
+    if (!SUP.includes(urlL)){
+      const params = new URLSearchParams(sp.toString())
+      params.set('lang', lang)
+      router.replace(`${pathname}?${params.toString()}`)
+    }
+    // localStorage'a yaz
+    try{ window.localStorage.setItem('lang', lang) }catch{}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang])
+
+  return lang
 }
 
-// Basit dil linkleri (query-string tabanlı). Bu bileşen interaktif değil, client'a gerek yok.
-function LangLinks({ compact }){
-  const base = typeof window !== 'undefined' ? window.location.pathname : '/legal';
-  const mk = (code, label)=> `${base}?lang=${code}`;
+function LangSelect(){
+  const router = useRouter()
+  const pathname = usePathname()
+  const sp = useSearchParams()
+  const lang = useLangFromUrl()
+
+  function onChange(e){
+    const val = (e.target.value||'tr').toLowerCase()
+    const params = new URLSearchParams(sp.toString())
+    params.set('lang', val)
+    try{ window.localStorage.setItem('lang', val) }catch{}
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
   return (
-    <div style={compact? styles.langCompact : styles.lang}>
-      <a href={mk('tr','Türkçe')}>TR</a>
-      <a href={mk('en','English')}>EN</a>
-      <a href={mk('ar','العربية')}>AR</a>
-      <a href={mk('de','Deutsch')}>DE</a>
-    </div>
-  );
+    <label style={{display:'inline-flex',alignItems:'center',gap:6}}>
+      <span role="img" aria-label="language">🌐</span>
+      <select value={lang} onChange={onChange} aria-label="Language"
+        style={{border:'1px solid #e5e7eb',borderRadius:10,padding:'6px 10px',background:'#fff',fontWeight:700}}>
+        <option value="tr">Türkçe</option>
+        <option value="en">English</option>
+        <option value="ar">العربية</option>
+        <option value="de">Deutsch</option>
+      </select>
+    </label>
+  )
 }
 
-// --- Stil ---
-const styles = {
-  shell:{background:'#fff',color:'#0f172a'},
-  container:{maxWidth:1100,margin:'0 auto',padding:'12px 14px'},
-  header:{position:'sticky',top:0,zIndex:30,backdropFilter:'blur(8px)',background:'rgba(255,255,255,.9)',borderBottom:'1px solid #e5e7eb'},
-  brand:{textDecoration:'none',fontWeight:800,color:'#111827'},
-  topnav:{borderBottom:'1px solid #e5e7eb',background:'#f8fafc'},
-  main:{minHeight:'60vh'},
-  footer:{borderTop:'1px solid #e5e7eb',background:'#fff'},
-  grid:{display:'grid',gap:16,gridTemplateColumns:'repeat(4,minmax(0,1fr))'},
-  h4:{margin:'8px 0',fontSize:15},
-  ul:{listStyle:'none',padding:0,margin:0,display:'grid',gap:6},
-  hr:{height:1,background:'#e5e7eb',margin:'12px 0'},
-  bottomRow:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,flexWrap:'wrap'},
-  lang:{display:'flex',gap:8,alignItems:'center'},
-  langCompact:{display:'flex',gap:6,alignItems:'center',opacity:.85}
-};
+export default function RootLayout({ children }){
+  // lang hook çağrısı, <html> dir/lang ayarlar ve URL dilini stabilize eder
+  useLangFromUrl()
 
-const css = `
-  a { color:#111827; text-decoration:none; }
-  .l { color:#111827; text-decoration:none; border:1px solid #e5e7eb; padding:6px 10px; border-radius:999px; font-weight:700; }
-  .l:hover { background:#111827; color:#fff; border-color:#111827; }
-  footer a { opacity:.9 }
-  @media (max-width: 900px){
-    .grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important }
-  }
-  @media (max-width: 560px){
-    .grid { grid-template-columns: 1fr !important }
-  }
-`;
+  return (
+    <html>
+      <body style={{margin:0,fontFamily:'system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif',color:'#0f172a',background:'#fff'}}>
+        <header style={bar}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <img src="/assets/images/logo.png" alt="logo" width={28} height={28} style={{borderRadius:8}}/>
+            <strong>Üreten Eller</strong>
+          </div>
+          <div style={{flex:1}}/>
+          <LangSelect />
+        </header>
+
+        <main style={{minHeight:'calc(100dvh - 56px)', padding:'12px'}}>
+          {children}
+        </main>
+
+        <footer style={foot}>
+          <small>© {new Date().getFullYear()} Üreten Eller</small>
+        </footer>
+      </body>
+    </html>
+  )
+}
+
+const bar={position:'sticky',top:0,zIndex:40,display:'flex',alignItems:'center',gap:10,padding:'10px 12px',borderBottom:'1px solid #e5e7eb',background:'rgba(255,255,255,.92)',backdropFilter:'blur(8px)'}
+const foot={borderTop:'1px solid #e5e7eb',padding:'10px 12px',background:'#fff'}
