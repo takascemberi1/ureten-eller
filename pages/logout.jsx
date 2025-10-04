@@ -1,23 +1,17 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useClerk } from "@clerk/nextjs";
-
-export default function LogoutPage(){
+export default function Logout(){
   const { signOut } = useClerk();
   const router = useRouter();
-
-  useEffect(() => {
-    (async () => {
-      try {
-        if (typeof window !== "undefined") {
-          ["role","full_name","il","ilce","city","my_rating","lang"].forEach(k=>localStorage.removeItem(k));
-        }
-        await signOut({ redirectUrl: "/login" });
-      } catch (e) {
-        router.replace("/login");
+  useEffect(()=>{(async()=>{
+    try{
+      if(typeof window!=="undefined"){
+        for(const k of ["role","full_name","il","ilce","city","my_rating","lang"]) try{localStorage.removeItem(k);}catch{}
       }
-    })();
-  }, [signOut, router]);
-
-  return <p style={{padding:16}}>Çıkış yapılıyor…</p>;
+      const next = (router.query?.next && decodeURIComponent(router.query.next)) || "/";
+      await signOut({ redirectUrl: next });
+    }catch(e){ router.replace("/"); }
+  })();},[signOut,router]);
+  return null;
 }
