@@ -1,46 +1,116 @@
-// app/layout.jsx — SERVER COMPONENT
-export const metadata = {
-  title: 'Üreten Eller',
-  description: 'El emeği ürünler pazaryeri'
+// app/legal/layout.jsx
+'use client';
+
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+
+const SUP = ['tr','en','ar','de'];
+
+function useLang() {
+  const sp = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [lang, setLang] = useState('tr');
+
+  // URL > cookie > default
+  useEffect(() => {
+    const q = (sp.get('lang') || '').toLowerCase();
+    if (SUP.includes(q)) {
+      setLang(q);
+      document.cookie = `lang=${q}; path=/; max-age=${60*60*24*365}`;
+    } else {
+      // URL yoksa cookie deneyelim (middleware genelde ekleyecek ama yine de)
+      const ck = (document.cookie || '').split(';').map(s=>s.trim()).find(s=>s.startsWith('lang='));
+      const cv = ck ? ck.split('=')[1] : '';
+      const val = SUP.includes(cv) ? cv : 'tr';
+      setLang(val);
+      const params = new URLSearchParams(sp.toString());
+      params.set('lang', val);
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp, pathname]);
+
+  const set = (next) => {
+    const val = SUP.includes(next) ? next : 'tr';
+    const params = new URLSearchParams(sp.toString());
+    params.set('lang', val);
+    document.cookie = `lang=${val}; path=/; max-age=${60*60*24*365}`;
+    router.replace(`${pathname}?${params.toString()}`);
+    setLang(val);
+  };
+
+  return { lang, setLang: set };
 }
 
-export default function RootLayout({ children }) {
-  const year = new Date().getFullYear()
+function TopBar() {
+  const { lang, setLang } = useLang();
+  const router = useRouter();
+
   return (
-    <html lang="tr">
-      <body style={{margin:0,fontFamily:'system-ui, Segoe UI, Roboto, Inter, Arial, sans-serif',color:'#0f172a',background:'#f8fafc'}}>
-        <header style={{padding:'10px 14px',background:'#fff',borderBottom:'1px solid #eee',position:'sticky',top:0,zIndex:10}}>
-          <div style={{maxWidth:1100,margin:'0 auto',display:'flex',alignItems:'center',gap:10}}>
-            <img src="/assets/images/logo.png" alt="logo" width="36" height="36" style={{borderRadius:8}}/>
-            <strong>Üreten Eller</strong>
-            <nav style={{marginLeft:'auto',display:'flex',gap:10}}>
-              <a href="/">Ana Sayfa</a>
-              <a href="/legal/gizlilik">Gizlilik</a>
-              <a href="/legal/kullanim-sartlari">Kullanım</a>
-              <a href="/legal/iletisim">İletişim</a>
-            </nav>
-          </div>
-        </header>
+    <header style={{
+      position:'sticky', top:0, zIndex:50, display:'flex', alignItems:'center', gap:8,
+      padding:'10px 14px', backdropFilter:'blur(10px)',
+      background:'rgba(255,255,255,.86)', borderBottom:'1px solid rgba(0,0,0,.08)'
+    }}>
+      <div style={{display:'flex', alignItems:'center', gap:10, fontWeight:800}}>
+        <img src="/assets/images/logo.png" width={28} height={28} style={{borderRadius:8}} alt="logo"/>
+        <span>Üreten Eller</span>
+      </div>
+      <div style={{flex:1}}/>
+      <nav style={{display:'flex', gap:8, alignItems:'center'}}>
+        <button onClick={()=>router.push('/?lang='+lang)} style={btn}>🏠 <span>Home</span></button>
+        <div style={{display:'flex', alignItems:'center', gap:6, border:'1px solid #e5e7eb', background:'#fff', borderRadius:12, padding:'4px 8px'}}>
+          <span>🌐</span>
+          <select
+            aria-label="Language"
+            value={lang}
+            onChange={e=>setLang(e.target.value)}
+            style={{border:'none', background:'transparent', fontWeight:700, cursor:'pointer'}}
+          >
+            <option value="tr">Türkçe</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+            <option value="de">Deutsch</option>
+          </select>
+        </div>
+      </nav>
+    </header>
+  );
+}
 
-        <main style={{minHeight:'70vh'}}>{children}</main>
+const btn = {
+  border:'1px solid #e5e7eb',
+  background:'#fff',
+  color:'#111827',
+  borderRadius:12,
+  padding:'8px 12px',
+  fontWeight:700,
+  cursor:'pointer'
+};
 
-        <footer style={{background:'#fff',borderTop:'1px solid #eee',padding:'16px 14px'}}>
-          <div style={{maxWidth:1100,margin:'0 auto'}}>
-            <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:8}}>
-              <a href="/legal/gizlilik">Gizlilik</a>
-              <a href="/legal/hakkimizda">Hakkımızda</a>
-              <a href="/legal/iletisim">İletişim</a>
-              <a href="/legal/kullanim-sartlari">Kullanım Şartları</a>
-              <a href="/legal/kvkk-aydinlatma">KVKK Aydınlatma</a>
-              <a href="/legal/mesafeli-satis-sozlesmesi">Mesafeli Satış</a>
-              <a href="/legal/teslimat-iade">Teslimat & İade</a>
-            </div>
-            <div style={{fontSize:13,color:'#475569'}}>
-              © {year} Üreten Eller • Tüm hakları saklıdır.
-            </div>
-          </div>
-        </footer>
-      </body>
-    </html>
-  )
+export default function LegalLayout({ children }) {
+  return (
+    <div style={{
+      minHeight:'100vh',
+      background: `radial-gradient(1000px 700px at -10% -10%, rgba(255,255,255,.35), transparent 60%),
+                   linear-gradient(120deg,#ff80ab,#a78bfa,#60a5fa,#34d399)`,
+      backgroundSize:'320% 320%',
+      animation:'drift 16s ease-in-out infinite'
+    }}>
+      <style>{`
+        @keyframes drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        .card{max-width:1100px; margin:12px auto; background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:14px}
+        .links{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:18px auto 28px; max-width:1100px}
+        .links a{border:1px solid #e5e7eb; background:#fff; color:#111827; border-radius:999px; padding:8px 12px; font-weight:700; text-decoration:none}
+      `}</style>
+
+      <TopBar/>
+
+      {/* CSR-bailout kullanan sayfa parçaları için Suspense şart */}
+      <Suspense fallback={<div className="card">Loading…</div>}>
+        {children}
+      </Suspense>
+    </div>
+  );
 }
