@@ -1,3 +1,4 @@
+"use client";
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -440,7 +441,7 @@ function ReviewList({ items, emptyText, onReply }){
     </div>
   );
 }
-'use client';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth, useUser, SignedIn, SignedOut } from '@clerk/nextjs';

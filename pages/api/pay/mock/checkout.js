@@ -2,7 +2,7 @@
 // DEMO "ödeme başlat": order -> paid, escrow.held=true
 // Not: Prod'da gerçek PSP (PayTR/iyzico) ödeme sayfasına yönlendirilir.
 
-import { byId, upsert } from "../../../../../lib/store.js";
+import { byId, upsert } from "../../../../lib/store.js";
 
 function toNum(x, d = 0) {
   const n = Number(x);
