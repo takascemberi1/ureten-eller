@@ -1,4 +1,5 @@
 "use client";
+import KycNotice from "../../components/KycNotice";
 import KycNotice from "@/components/KycNotice";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
@@ -323,6 +324,7 @@ export default function Profile(){
             <article className="card">
     <KycNotice />
               <h3>🪪 {t.kyc}</h3>
+    <KycNotice lang={lang} />
               <div className="grid">
                 <label className="lab"><span>{t.idnum}</span><input value={kyc.idnum} onChange={e=>setKyc({...kyc,idnum:e.target.value})}/></label>
                 <label className="lab"><span>{t.iban}</span><input value={kyc.iban} onChange={e=>setKyc({...kyc,iban:e.target.value})}/></label>
