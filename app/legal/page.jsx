@@ -1,8 +1,8 @@
-// app/legal/page.jsx — SERVER COMPONENT (no "use client")
+// app/legal/page.jsx  — SERVER COMPONENT
 import { redirect } from 'next/navigation'
 
 const SUP = ['tr','en','ar','de']
-export const dynamic = 'force-dynamic' // /legal'i SSG etme, istekte yönlendir
+export const dynamic = 'force-dynamic'
 
 export default function LegalIndexPage({ searchParams }) {
   const q = searchParams || {}
