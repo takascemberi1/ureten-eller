@@ -1,11 +1,9 @@
-"use client";
-import { useEffect } from "react";
+import { redirect } from "next/navigation";
 
-// / isteğini /home.html'e yönlendir
+// / isteğini SSR'da doğrudan /home.html'e yönlendir
 export const metadata = { title: "Üreten Eller" };
 
-export default function LandingRedirect(){
-  useEffect(()=>{ if(typeof window!=="undefined"){ window.location.replace("/home.html"); }},[]);
-  // JS kapalıysa:
-  return <noscript><meta httpEquiv="refresh" content="0; url=/home.html" /></noscript>;
+export default function RootPage() {
+  redirect("/home.html");
+  return null;
 }
