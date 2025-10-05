@@ -7,5 +7,4 @@ export async function getServerSideProps(ctx) {
   } catch {}
   return { redirect: { destination: "/", permanent: false } };
 }
-
 export default function Logout(){ return null; }
