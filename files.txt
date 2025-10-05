@@ -30,7 +30,7 @@ pages/portal/logout.jsx
 pages/portal/seller/index.jsx
 pages/profile/index.jsx
 pages/register/index.jsx
-pages/sign-out.jsx
+pages/logout.jsx
 public/assets/images/logo.png
 public/assets/sounds/notify.mp3
 public/favicon.ico

@@ -1,17 +1,28 @@
 "use client";
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 
-export default function Logout(){
+export default function Logout() {
   const { signOut } = useClerk();
   const sp = useSearchParams();
+  const router = useRouter();
+
   useEffect(() => {
     const next = sp?.get("next") || "/";
+    let cancelled = false;
+
     (async () => {
-      try { await signOut({ redirectUrl: next }); }
-      catch { window.location.href = next; }
+      try {
+        await signOut({ redirectUrl: next });
+        if (!cancelled) router.replace(next);           // Clerk bazen ignore ederse
+      } catch (e) {
+        if (!cancelled) router.replace(next);           // Oturum yoksa/hatada da eve
+      }
     })();
-  }, [signOut, sp]);
+
+    return () => { cancelled = true; };
+  }, [sp, signOut, router]);
+
   return null;
 }
