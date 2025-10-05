@@ -265,7 +265,7 @@ export default function ShippingReturnsPage() {
       <header className="topbar">
         <div className="wrap">
           <a className="brand" href="/">{t.brand}</a>
-          <nav><a className="btn" href="/logout">Çıkış</a></nav>
+          <nav><a className="btn" href="/logout?next=/">Çıkış</a></nav>
         </div>
       </header>
 
