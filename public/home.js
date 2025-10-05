@@ -113,3 +113,4 @@
     window.location.href = "/login?role=seller";
   });
 })();
+document.getElementById("logoutBtn")?.addEventListener("click",function(e){e.preventDefault();location.href="/sign-out?next=/";});
