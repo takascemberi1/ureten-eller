@@ -1,28 +1,29 @@
 "use client";
 import { useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useClerk } from "@clerk/nextjs";
 
 export default function Logout() {
   const { signOut } = useClerk();
-  const sp = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
-    const next = sp?.get("next") || "/";
-    let cancelled = false;
+    // query'den next al; yoksa "/"
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next") || "/";
 
+    let cancelled = false;
     (async () => {
       try {
-        await signOut({ redirectUrl: next });   // Clerk düzgün yönlendirirse iş biter
-        if (!cancelled) router.replace(next);   # Ek güvenlik: yine de eve gönder
-      } catch (e) {
-        if (!cancelled) router.replace(next);   # Oturum yoksa/hatada da eve
+        await signOut({ redirectUrl: next });   // Clerk yönlendirirse ne âlâ
+        if (!cancelled) router.replace(next);   // Yine de fallback ile eve
+      } catch {
+        if (!cancelled) router.replace(next);   // Oturum yoksa/hatada da eve
       }
     })();
 
     return () => { cancelled = true; };
-  }, [sp, signOut, router]);
+  }, [signOut, router]);
 
   return null;
 }
