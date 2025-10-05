@@ -1,1 +1,1 @@
-export { default } from "../sign-out";
+export { default } from "../logout";

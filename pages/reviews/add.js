@@ -7,7 +7,7 @@
 // Not: Gerçekte moderasyon + anti-spam + hız limiti + denetim kayıtları da eklenir.
 
 import { getAuth, clerkClient } from "@clerk/nextjs/server";
-import { byId, upsert, readAll, writeAll } from "../../../lib/store.js";
+import { byId, upsert, readAll, writeAll } from "../../lib/store.js";
 
 const ORDERS = "orders";
 const REVIEWS = "reviews";

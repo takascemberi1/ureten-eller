@@ -5,7 +5,7 @@
 // Not: Gerçekte bu rakamlar PSP/webhook/payout kayıtlarıyla tutulur.
 
 import { getAuth } from "@clerk/nextjs/server";
-import { readAll } from "../../../lib/store.js";
+import { readAll } from "../../lib/store.js";
 
 function sum(arr) {
   return Number(

@@ -3,7 +3,7 @@
 // Clerk kimliğine göre filtreler. Demo depolama için lib/store.js kullanır.
 
 import { getAuth } from "@clerk/nextjs/server";
-import { readAll } from "../../../lib/store.js";
+import { readAll } from "../../lib/store.js";
 
 export default function handler(req, res) {
   if (req.method !== "GET") {
