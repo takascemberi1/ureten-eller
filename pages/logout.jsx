@@ -9,15 +9,14 @@ export default function Logout() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const next = params.get("next") || "/";
-
+    const next = params.get("next") || "/";   // hedef: pages/index.jsx ("/")
     let cancelled = false;
+
     (async () => {
       try {
-        await signOut({ redirectUrl: next });    // Clerk yönlendirmesi
-        if (!cancelled) router.replace(next);    // Ek güvenlik: yine eve
-      } catch {
-        if (!cancelled) router.replace(next);    // Oturum yoksa/hatada da eve
+        await signOut({ redirectUrl: next }); // Clerk yönlendirme
+      } finally {
+        if (!cancelled) router.replace(next); // HER DURUMDA eve
       }
     })();
 
