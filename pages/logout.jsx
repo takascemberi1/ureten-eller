@@ -14,10 +14,10 @@ export default function Logout() {
 
     (async () => {
       try {
-        await signOut({ redirectUrl: next });
-        if (!cancelled) router.replace(next);           // Clerk bazen ignore ederse
+        await signOut({ redirectUrl: next });   // Clerk düzgün yönlendirirse iş biter
+        if (!cancelled) router.replace(next);   # Ek güvenlik: yine de eve gönder
       } catch (e) {
-        if (!cancelled) router.replace(next);           // Oturum yoksa/hatada da eve
+        if (!cancelled) router.replace(next);   # Oturum yoksa/hatada da eve
       }
     })();
 
