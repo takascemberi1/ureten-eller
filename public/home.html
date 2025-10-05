@@ -494,7 +494,7 @@
     // Navigation actions
     function goHome(){ window.location.href = '/'; }
     function postListing(){ if(state.role==='seller'){ window.location.href = '/portal/seller?new=listing'; } else { alert((state.lang==='en')?'Only makers can post a listing.': (state.lang==='de')?'Nur Anbieterinnen können Anzeigen erstellen.': (state.lang==='ar')?'فقط المُنتِجات يمكنهن إنشاء إعلان.': 'Yalnızca Üreten El ilan verebilir.'); } }
-    function logout(){ window.location.href='/logout?next=/'; }
+    function logout(){ window.location.href='/logout
 
     // Support bubble
     function supOpen(){ const win=qs('#supportWin'); if(!win) return; win.classList.add('open'); const log=qs('#supLog'); if(log){ log.innerHTML=''; addBot(STR[state.lang].support.hello); } }

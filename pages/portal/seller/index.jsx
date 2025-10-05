@@ -65,7 +65,7 @@ export default function SellerPortal() {
             {L("home", "Ana Sayfa")}
           </a>
 
-          <SignOutButton signOutOptions={{ redirectUrl: "/" }}>
+          <a href="/logout">
             <button
               style={{
                 padding: "12px 16px",
@@ -79,7 +79,7 @@ export default function SellerPortal() {
             >
               {L("logout", "Çıkış")}
             </button>
-          </SignOutButton>
+          </a>
         </div>
       </SignedIn>
     </div>

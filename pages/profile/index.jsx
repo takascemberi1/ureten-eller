@@ -288,7 +288,7 @@ export default function Profile(){
           </div>
           <div className="actions">
             <button className="btn" onClick={openSettings}>⚙️ {t.settings}</button>
-            <a className="btn ghost" href="/logout?next=/">⇦ {t.logout}</a>
+            <a className="btn ghost" href="/logout">⇦ {t.logout}</a>
           </div>
         </header>
         {msg && <div className="msg">{msg}</div>}
