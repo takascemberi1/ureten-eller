@@ -1,1 +1,1 @@
-export { default } from "./logout";
+export { default, getServerSideProps } from "./logout";

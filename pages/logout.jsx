@@ -1,12 +1,13 @@
-"use client";
-import { useEffect } from "react";
-import { useClerk } from "@clerk/nextjs";
+import { clerkClient, getAuth } from "@clerk/nextjs/server";
 
-export default function LogoutPage() {
-  const { signOut } = useClerk();
-  useEffect(() => {
-    const next = "/";
-    signOut({ redirectUrl: next }).catch(() => window.location.assign(next));
-  }, [signOut]);
-  return null;
+export async function getServerSideProps(ctx) {
+  try {
+    const { sessionId } = getAuth(ctx.req);
+    if (sessionId) {
+      await clerkClient.sessions.revokeSession(sessionId);
+    }
+  } catch (e) {}
+  return { redirect: { destination: "/", permanent: false } };
 }
+
+export default function Logout() { return null; }
