@@ -2,18 +2,11 @@
 import { useEffect } from "react";
 import { useClerk } from "@clerk/nextjs";
 
-export default function Logout() {
+export default function LogoutPage() {
   const { signOut } = useClerk();
-
   useEffect(() => {
-    (async () => {
-      try {
-        await signOut({ redirectUrl: "/" }); // ÇIKIŞ → ANASAYFA
-      } catch {
-        window.location.href = "/";
-      }
-    })();
+    const next = new URLSearchParams(window.location.search).get("next") || "/";
+    signOut({ redirectUrl: next }).catch(() => window.location.assign(next));
   }, [signOut]);
-
   return null;
 }
