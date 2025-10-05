@@ -8,17 +8,16 @@ export default function Logout() {
   const router = useRouter();
 
   useEffect(() => {
-    // query'den next al; yoksa "/"
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next") || "/";
 
     let cancelled = false;
     (async () => {
       try {
-        await signOut({ redirectUrl: next });   // Clerk yönlendirirse ne âlâ
-        if (!cancelled) router.replace(next);   // Yine de fallback ile eve
+        await signOut({ redirectUrl: next });    // Clerk yönlendirmesi
+        if (!cancelled) router.replace(next);    // Ek güvenlik: yine eve
       } catch {
-        if (!cancelled) router.replace(next);   // Oturum yoksa/hatada da eve
+        if (!cancelled) router.replace(next);    // Oturum yoksa/hatada da eve
       }
     })();
 
