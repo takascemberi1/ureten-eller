@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "../lib/clerkStub";
 
 /* ----------------------------- DİL AYARLARI ----------------------------- */
 const SUPPORTED = ["tr", "en", "ar", "de"];
