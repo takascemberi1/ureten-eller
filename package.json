@@ -5,7 +5,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "export": "next build && next export -o docs"
+    "export": "next export"
   },
   "dependencies": {
     "@clerk/localizations": "^3.25.5",
